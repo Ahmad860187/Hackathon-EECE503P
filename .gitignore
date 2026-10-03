@@ -12,3 +12,5 @@ dev/
 *.pdf
 eval/cases/*/reference.json
 !examples/*/out/
+.agents/
+skills-lock.json

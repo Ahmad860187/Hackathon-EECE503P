@@ -613,6 +613,28 @@ def unverified_expectations(spec, compute_js) -> tuple:
     return bad_t, bad_i
 
 
+def exploration_facts(spec, compute_js) -> list:
+    """Actual watched values at defaults vs each exploration preset (for the fidelity audit)."""
+    if quickjs is None or not isinstance(spec, dict) or not compute_js:
+        return []
+    out = []
+    for e in spec.get("explorations", []):
+        w = e.get("watch", "")
+        vals = []
+        for p in (default_params(spec), merged_params(spec, e.get("preset"))):
+            ctx = quickjs.Context()
+            ctx.set_time_limit(EVAL_TIME_LIMIT_S)
+            ctx.set_memory_limit(MEMORY_LIMIT)
+            try:
+                ctx.eval(compute_js)
+                vals.append(ctx.eval(f"JSON.stringify(compute({json.dumps(p)})[{json.dumps(w)}])"))
+            except Exception as ex:  # noqa: BLE001
+                vals.append(f"error: {str(ex)[:60]}")
+        out.append({"title": e.get("title", ""), "preset": e.get("preset"), "watch": w,
+                    "at_defaults": str(vals[0])[:200], "at_preset": str(vals[1])[:200]})
+    return out
+
+
 def accepted(results) -> bool:
     return all(r["result"] != "fail" for r in results if r["id"] in ACCEPT_IDS)
 

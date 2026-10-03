@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+os.environ.setdefault("P2P_AUDIT", "off")  # call-count-exact pipeline tests; the audit is tested separately
 import subprocess
 import sys
 import tempfile

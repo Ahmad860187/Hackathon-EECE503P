@@ -50,6 +50,9 @@ case.json ─► LOAD ─► GENERATE (1 LLM call) ─► ASSEMBLE ─► CHECK 
   - **Grounding honesty:** G1.
 
   Each result is logged in the trace, and failures trigger targeted repairs.
+- **Fidelity audit** (about 1k tokens). Once a page passes, one short call shows the model the *actual*
+  computed values for each exploration and asks it to correct any explanation that contradicts them.
+  The edit may change text only, and it is kept only if every check still passes.
 - **Budget guard** (`paper2play/budget.py`). This enforces 10 min, ≤10 requests incl. retries and ≤30k
   completion tokens per case. Hidden reasoning is disabled by default because it counts as completion
   tokens and dominated latency in our measurements. If a reply is empty because reasoning used up the

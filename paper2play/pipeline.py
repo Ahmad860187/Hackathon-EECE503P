@@ -372,7 +372,54 @@ class Run:
                              score=list(cand.score), kept_score=list(best.score),
                              detail="no improvement or a previously passing check regressed")
 
+            if best is not None and best.accepted and os.environ.get("P2P_AUDIT", "on") != "off":
+                best = self.fidelity_audit(best, client)
+
         return self.write_outputs(best, reason)
+
+    def fidelity_audit(self, best, client):
+        """One short call: show the model the ACTUAL computed values for each exploration and let it
+        correct explanation text that contradicts them. Kept only if every acceptance check still passes."""
+        tr = self.trace
+        ok, why = self.budget.check_can_call(min_tokens=1500)
+        if not ok or self.budget.remaining_time() < 90:
+            tr.event("audit", "skip", "skip", detail=why or "not enough time left")
+            return best
+        facts = chk.exploration_facts(best.spec, best.compute)
+        if not facts:
+            return best
+        view = {"explorations": best.spec.get("explorations", []), "limitation": best.spec.get("limitation"),
+                "claims": best.spec.get("claims", [])}
+        umsg = ("COMPUTED FACTS (from running compute(); these are ground truth for this page):\n"
+                + json.dumps(facts, ensure_ascii=False) + "\n\nCURRENT TEXT:\n" + json.dumps(view, ensure_ascii=False)
+                + "\n\nIf every observe/why/claim is consistent with the computed facts and the mechanism, reply "
+                  "exactly OK. Otherwise reply with ===SPEC=== containing ONLY the corrected keys among "
+                  "explorations, limitation, claims (keep presets and watch keys unchanged), then ===END===.")
+        msgs = [{"role": "system", "content": "You audit an interactive teaching page for scientific fidelity. "
+                 "Fix only statements that contradict the computed facts or the mechanism; keep wording otherwise."},
+                {"role": "user", "content": umsg}]
+        try:
+            res = client.chat(msgs, 2500, stage="audit", purpose="fidelity", min_tokens=1500)
+        except Exception as e:  # noqa: BLE001 - the audit is optional; any failure keeps the accepted page
+            tr.event("audit", "give_up", "skip", detail=f"{type(e).__name__}: {str(e)[:200]}")
+            return best
+        if res.text.strip().upper().startswith("OK") or "===SPEC===" not in res.text:
+            tr.event("audit", "fidelity", "pass", detail="explanation text consistent with computed values")
+            return best
+        cand = self.apply_repair(best, res.text, "audit")
+        cand.compute, cand.render = best.compute, best.render   # the audit may only edit text
+        # presets/watch keys must not change: restore them so the audit can only edit prose
+        for e_new, e_old in zip((cand.spec_in or {}).get("explorations", []), best.spec.get("explorations", [])):
+            if isinstance(e_new, dict):
+                e_new["preset"], e_new["watch"] = e_old.get("preset"), e_old.get("watch")
+        self.revisions += 1
+        cand = self.evaluate(cand)
+        if cand.accepted and not self.better(best, cand):
+            tr.event("audit", "fidelity", "ok", detail="explanation text corrected against computed values",
+                     candidate=cand.label)
+            return cand
+        tr.event("audit", "fidelity", "skip", detail="audit edit rejected (checks regressed)")
+        return best
 
     def prune_unverified(self, best):
         """After repairs: drop model-written tests/invariants that are still false, so the page only

@@ -25,7 +25,8 @@ var kit = (function () {
 
   var st = {
     n: 0, store: {}, names: {}, nNames: 0, watch: null, width: 0, noMotion: false,
-    onSet: null, tl: {}, vec: {}, drag: null, dragInit: false, uid: 0
+    onSet: null, tl: {}, vec: {}, drag: null, dragInit: false, uid: 0,
+    lastBegin: -1e9, instant: false
   };
 
   /* ------------------------------------------------------------------ helpers */
@@ -306,19 +307,49 @@ var kit = (function () {
     if (s.sig === undefined) { s.cur = data; s.sig = sig; s.at = t; }
     else if (sig !== s.sig) {
       if (t - s.at > BURST_MS || s.ghost === null) { s.ghost = s.cur; s.ghostSig = s.sig; }
-      out.prev = s.cur; s.cur = data; s.sig = sig; s.at = t;
+      /* interruptible: if the previous tween is still in flight, start the new one from
+         the value currently on screen (not from the old target), so nothing jumps */
+      var origin = s.cur, el = t - s.at;
+      if (s.from !== undefined && s.from !== null && el >= 0 && el < TWEEN_MS) {
+        try { origin = blend(s.from, s.cur, ease(el / TWEEN_MS), 0); } catch (e) { origin = s.cur; }
+      }
+      out.prev = origin;
+      s.from = (st.instant || reducedMotion()) ? null : origin;
+      s.cur = data; s.sig = sig; s.at = t;
     }
     if (s.ghost !== null && s.ghostSig !== sig) out.ghost = s.ghost;
     return out;
   }
+  /* ease-out cubic: moves at once and settles without overshoot (close to a critically
+     damped spring), so a change reads as an immediate response, not a delayed one */
+  function ease(a) { a = clamp(a, 0, 1); return 1 - Math.pow(1 - a, 3); }
+  /* value currently on screen while a tween from a to b is at eased progress e */
+  function blend(a, b, e, d) {
+    if (d > 6) return b;
+    if (isNum(a) && isNum(b)) return a + (b - a) * e;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return b;
+      var o = [];
+      for (var i = 0; i < b.length; i++) o.push(blend(a[i], b[i], e, d + 1));
+      return o;
+    }
+    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) {
+      var r = {};
+      for (var k in b) if (Object.prototype.hasOwnProperty.call(b, k)) r[k] = blend(a[k], b[k], e, d + 1);
+      return r;
+    }
+    return b;
+  }
   function tween(fn) {
     fn(1); // final state first: correct even if animation frames never run
-    if (st.noMotion || reducedMotion() || typeof requestAnimationFrame !== 'function') return;
+    /* st.instant: continuous input (slider drag, held arrow key, handle drag) - the visual
+       tracks the input 1:1 instead of trailing behind it */
+    if (st.noMotion || st.instant || reducedMotion() || typeof requestAnimationFrame !== 'function') return;
     var t0 = null;
     function step(ts) {
       if (t0 === null) t0 = ts;
       var a = clamp((ts - t0) / TWEEN_MS, 0, 1);
-      var e = a < 0.5 ? 2 * a * a : 1 - Math.pow(-2 * a + 2, 2) / 2;
+      var e = ease(a);
       try { fn(e); } catch (err) { return; }
       if (a < 1) requestAnimationFrame(step);
     }
@@ -1752,7 +1783,10 @@ var kit = (function () {
     color: color, accent: 'var(--accent)', rng: rng,
     isWatched: isWatched,
     /* internal hooks used by app.js (not part of the generated-code API) */
-    _begin: function (opts) { st.n = 0; st.width = opts && isNum(opts.width) ? opts.width : st.width; },
+    _begin: function (opts) {
+      st.n = 0; st.width = opts && isNum(opts.width) ? opts.width : st.width;
+      var t = now(); st.instant = (t - st.lastBegin) < 90; st.lastBegin = t;
+    },
     _setWatch: function (key, label) { st.watch = key ? { key: str(key), label: str(label) } : null; },
     _onSet: function (fn) { st.onSet = fn; },
     _niceStep: niceStep

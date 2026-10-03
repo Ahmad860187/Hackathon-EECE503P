@@ -235,7 +235,15 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
                     if m:
                         body = "Abstract: " + m.group(1)
                 title = re.sub(r"^\[[^\]]+\]\s*", "", title)
-                return {"text": slice_around(body, focus), "title": title, "origin": "fetched",
+                sliced = slice_around(body, focus)
+                kws = keywords(focus)[:12]
+                hits = sum(1 for k in kws if k in sliced.lower())
+                if kws and hits < max(2, len(kws) // 4):
+                    # e.g. a dataset landing page or paywall: not the paper's text, so it must not
+                    # be presented as the source excerpt
+                    notes.append(f"{u}: fetched text does not match the focus ({hits}/{len(kws)} key terms)")
+                    continue
+                return {"text": sliced, "title": title, "origin": "fetched",
                         "detail": f"fetched {u}" + (f"; {'; '.join(notes)}" if notes else "")}
             except (urllib.error.URLError, OSError, ValueError) as e:
                 notes.append(f"{u}: {type(e).__name__}")
