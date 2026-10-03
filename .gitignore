@@ -15,3 +15,6 @@ eval/cases/*/reference.json
 .agents/
 skills-lock.json
 studio_runs/
+PLAN.md
+eval/build_cases.py
+eval/cases_b2.py

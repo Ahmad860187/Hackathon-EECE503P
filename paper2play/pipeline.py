@@ -154,10 +154,6 @@ class Run:
         return cand
 
     def candidate_from_text(self, text: str, label: str) -> Candidate:
-        dbg = os.environ.get("P2P_DEBUG_DIR")  # development only: keep the raw model reply for inspection
-        if dbg:
-            Path(dbg).mkdir(parents=True, exist_ok=True)
-            (Path(dbg) / f"raw_{label}.txt").write_text(text, encoding="utf-8")
         parsed = parse_output(text)
         self.trace.event("parse", "protocol", "ok" if len(parsed.found) == 3 and parsed.spec else "fail",
                          candidate=label, found=parsed.found, notes=parsed.notes,
