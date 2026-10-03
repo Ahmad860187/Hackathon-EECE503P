@@ -436,7 +436,8 @@ class Run:
         bad_live = [eq.get("label", "") for eq in best.spec.get("equations", [])
                     if eq.get("live") and "live equation '" + str(eq.get("label", ""))[:30] in
                     next((c["detail"] for c in best.checks if c["id"] == "C4"), "")]
-        if not bad_t and not bad_i and not bad_live:
+        map_bad = "map node '" in next((c["detail"] for c in best.checks if c["id"] == "C4"), "")
+        if not bad_t and not bad_i and not bad_live and not map_bad:
             return best
         spec = copy.deepcopy(best.spec)
         spec["tests"] = [t for t in spec.get("tests", []) if t.get("name", "") not in bad_t]
@@ -444,6 +445,11 @@ class Run:
         for eq in spec.get("equations", []):
             if eq.get("label", "") in bad_live:
                 eq["live"] = ""
+        c4 = next((c["detail"] for c in best.checks if c["id"] == "C4"), "")
+        for n in (spec.get("map") or {}).get("nodes", []):
+            if f"map node '{n.get('id')}' key" in c4:
+                n["key"] = ""          # show the node without a live value rather than a placeholder
+                bad_live.append(f"map:{n.get('id')}")
         self.trace.event("finalize", "prune_unverified", "ok", candidate=best.label,
                          removed_tests=bad_t, removed_invariants=bad_i, removed_live_equations=bad_live,
                          detail="model-written expectations still false after repairs were removed from "

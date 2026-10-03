@@ -567,6 +567,7 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
     # otherwise the page shows "?" / "—" placeholders instead of numbers
     probs = []
     keys = [(f"intermediate '{it.get('key')}'", str(it.get("key", ""))) for it in spec.get("intermediates", [])]
+    keys += [(f"map node '{n.get('id')}' key", str(n.get("key", ""))) for n in (spec.get("map") or {}).get("nodes", [])]
     for eq in spec.get("equations", []):
         for k in re.findall(r"\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+|\[\d+\])*)\s*(?::\s*\d+)?\s*\}", str(eq.get("live") or "")):
             keys.append((f"live equation '{str(eq.get('label', ''))[:30]}' key {{{k}}}", k))

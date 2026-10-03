@@ -278,7 +278,29 @@ def normalize_spec(spec: dict, case: dict, origin: str) -> tuple:
     s["invariants"] = _exprs("invariants", "label")
     s["tests"] = _exprs("tests", "name")
     _snap_steps(s, notes)
+    _clean_map(s, notes)
     return s, notes
+
+
+def _clean_map(s: dict, notes: list) -> None:
+    """Optional mechanism map (drawn by the shell with kit.flow). Keep only well-formed parts."""
+    m = s.get("map")
+    if not isinstance(m, dict):
+        s.pop("map", None)
+        return
+    nodes, seen = [], set()
+    for n in m.get("nodes") or []:
+        if isinstance(n, dict) and _s(n.get("id")) and _s(n.get("id")) not in seen:
+            seen.add(_s(n["id"]))
+            nodes.append({"id": _s(n["id"]), "label": _s(n.get("label")) or _s(n["id"]), "key": _s(n.get("key"))})
+    edges = [{"from": _s(e.get("from")), "to": _s(e.get("to")), "label": _s(e.get("label"))}
+             for e in (m.get("edges") or []) if isinstance(e, dict)
+             and _s(e.get("from")) in seen and _s(e.get("to")) in seen]
+    if len(nodes) < 2:
+        s.pop("map", None)
+        notes.append("map dropped (fewer than 2 valid nodes)")
+        return
+    s["map"] = {"nodes": nodes[:8], "edges": edges[:12]}
 
 
 def _snap_steps(s: dict, notes: list) -> None:

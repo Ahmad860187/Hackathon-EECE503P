@@ -22,6 +22,7 @@ SPEC (JSON, every key required, strings short and concrete):
  {"id","label","type":"matrix","rows","cols","default":[[…]],"min","max","step","help"} ],
 "intermediates":[{"key":"key of r","label":"","fmt":3,"unit":""}],
 "visual":{"caption":"what you are looking at","how_to_read":"axes, colours, what the highlight marks"},
+"map":{"nodes":[{"id":"","label":"short","key":"key of r or control id shown live"}],"edges":[{"from":"","to":"","label":"operation"}]}  (3-7 nodes: the mechanism's chain inputs→steps→output; every key must exist),
 "explorations":[ exactly 2 × {"title":"","predict":"question for the learner","preset":{"controlId":value},"watch":"key of r","observe":"what they see","why":"the mechanism"} ],
 "limitation":{"kind":"limitation|assumption|misconception","text":""},
 "claims":[{"text":"","support":"excerpt|paper|illustration"}],

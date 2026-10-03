@@ -16,8 +16,8 @@ import urllib.request
 from pathlib import Path
 
 EXCERPT_CHARS = 6000
-FETCH_TIMEOUT_S = 3.0
-FETCH_TOTAL_S = 4.5
+FETCH_TIMEOUT_S = 4.0
+FETCH_TOTAL_S = 8.0   # html -> abs -> pdf; a blocked network fails fast (DNS/connect errors)
 INLINE_MIN_CHARS = 400
 
 _STOP = set("""a an the and or of to in on for with by from as at is are was were be been this that these
@@ -98,6 +98,32 @@ def html_to_text(raw: str) -> tuple:
 
 
 _ARXIV_ID = r"([0-9]{4}\.[0-9]{4,5}(?:v\d+)?|[a-z\-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)"
+
+
+def _pdf_text(data: bytes, max_pages: int = 25) -> str:
+    """Text of the first pages of a PDF (pure-Python pypdf); "" if unavailable or unreadable."""
+    try:
+        import io
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(data))
+        parts = []
+        for page in reader.pages[:max_pages]:
+            parts.append(page.extract_text() or "")
+        return _clean_ws(" ".join(parts))
+    except Exception:  # noqa: BLE001 - truncated/encrypted/odd PDFs simply give no excerpt
+        return ""
+
+
+def _docx_text(path) -> str:
+    """Paragraph text of a .docx (a zip of XML) using only the standard library; "" on failure."""
+    try:
+        import zipfile
+        with zipfile.ZipFile(path) as z:
+            xml = z.read("word/document.xml").decode("utf-8", errors="replace")
+        xml = re.sub(r"</w:p>", "\n", xml)
+        return _clean_ws(html.unescape(re.sub(r"<[^>]+>", "", xml)))
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _arxiv_id(url: str):
@@ -183,7 +209,18 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
             try:
                 if c.is_file():
                     if c.suffix.lower() == ".pdf":
-                        notes.append(f"file {c.name} is a PDF (not parsed)")
+                        text = _pdf_text(c.read_bytes()[:30_000_000])
+                        if len(text) >= 300:
+                            return {"text": slice_around(text, focus), "title": "", "origin": "file",
+                                    "detail": f"read PDF {c.name}"}
+                        notes.append(f"file {c.name}: no extractable PDF text")
+                        break
+                    if c.suffix.lower() == ".docx":
+                        text = _docx_text(c)
+                        if len(text) >= 300:
+                            return {"text": slice_around(text, focus), "title": "", "origin": "file",
+                                    "detail": f"read Word document {c.name}"}
+                        notes.append(f"file {c.name}: no extractable Word text")
                         break
                     raw = c.read_text(encoding="utf-8", errors="replace")
                     title = ""
@@ -212,8 +249,8 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
         urls = []
         aid = _arxiv_id(src)
         if aid:
-            urls = [f"https://arxiv.org/html/{aid}", f"https://arxiv.org/abs/{aid}"]
-        elif not src.lower().endswith(".pdf"):
+            urls = [f"https://arxiv.org/html/{aid}", f"https://arxiv.org/abs/{aid}", f"https://arxiv.org/pdf/{aid}"]
+        else:
             urls = [src]
         for u in urls:
             left = t_end - time.monotonic()
@@ -222,11 +259,11 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
                 break
             try:
                 ctype, data = _fetch(u, min(FETCH_TIMEOUT_S, left))
-                if "pdf" in ctype.lower():
-                    notes.append(f"{u}: pdf not parsed")
-                    continue
-                raw = data.decode("utf-8", errors="replace")
-                title, body = html_to_text(raw) if "<" in raw[:5000] else ("", raw)
+                if "pdf" in ctype.lower() or data[:5] == b"%PDF-":
+                    title, body = "", _pdf_text(data)
+                else:
+                    raw = data.decode("utf-8", errors="replace")
+                    title, body = html_to_text(raw) if "<" in raw[:5000] else ("", raw)
                 if len(body) < 300:
                     notes.append(f"{u}: too little text")
                     continue
