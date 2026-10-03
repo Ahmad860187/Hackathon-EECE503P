@@ -144,7 +144,7 @@ def _fix_control(c: dict, notes: list):
 TOP_LEVEL_KEYS = ("title", "paper", "idea", "why", "symbols", "equations", "controls", "intermediates",
                   "visual", "explorations", "limitation", "claims", "invariants", "tests")
 # Only structural keys that cannot legitimately appear nested (e.g. never hoist explorations[0].why).
-HOISTABLE_KEYS = ("symbols", "equations", "controls", "intermediates", "explorations", "limitation",
+HOISTABLE_KEYS = ("symbols", "equations", "controls", "intermediates", "explorations", "limitation", "map",
                   "claims", "invariants", "tests")
 
 
