@@ -685,6 +685,8 @@ var kit = (function () {
       var hiSet = {};
       arr(o.highlight).forEach(function (i) { hiSet[Math.round(num(i))] = true; });
       labels.forEach(function (l, i) { if (isWatched(l)) hiSet[i] = true; });
+      // highlighting every bar carries no information (and would contradict the legend colour)
+      if (n > 1 && Object.keys(hiSet).length >= n) hiSet = {};
       var anyHi = Object.keys(hiSet).length > 0;
       var mem = remember(slot('bars', o.title), { v: vals, s: sec ? sec.values : null });
       var gv = mem.ghost ? arr(mem.ghost.v) : null, gs = mem.ghost ? arr(mem.ghost.s) : null;
