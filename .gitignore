@@ -11,3 +11,4 @@ eval/fixtures/
 dev/
 *.pdf
 eval/cases/*/reference.json
+!examples/*/out/
