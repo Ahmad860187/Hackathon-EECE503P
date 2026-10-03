@@ -101,5 +101,6 @@ def build_fallback(case: dict | None, spec: dict | None = None, reason: str = ""
     parts.append(f'<p class="muted">Generated {gen}{(" · model " + _e(model)) if model else ""} · fallback page</p>')
     return ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
             "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+            "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'\">"
             f"<title>{_e(title)} (incomplete)</title><style>{_CSS}</style></head>"
             f"<body><main>{''.join(parts)}</main></body></html>")

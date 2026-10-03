@@ -515,14 +515,15 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
         if out is None or out.get("error"):
             probs.append(f"'{name}': {(out or {}).get('error') or err}")
         elif not out.get("value"):
-            probs.append(f"'{name}' is false: {t['expr'][:120]}" + (f" (unknown params {unknown})" if unknown else ""))
+            probs.append(f"'{name}' is false: {t['expr'][:120]}" + _actual_values(js, merged_params(spec, t.get("params")), t["expr"])
+                         + (f" (unknown params {unknown})" if unknown else ""))
         elif unknown:
             probs.append(f"'{name}': params {unknown} are not control ids")
     nt = len(spec.get("tests", []))
     if 0 < nt < 2 and not probs:
         probs.append(f"only {nt} test (need >=2)")
     results["C1"] = _res("C1", "fail" if probs or nt == 0 else "pass",
-                         "; ".join(probs[:4]) or (f"{nt} tests pass" if nt else "no tests"))
+                         "; ".join(probs[:8]) or (f"{nt} tests pass" if nt else "no tests"))
 
     # C2 exploration presets change the watched value
     probs = []
@@ -558,10 +559,11 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
                 probs.append(f"'{inv.get('label', '')[:50]}' at {where}: {(out or {}).get('error') or err}")
                 break
             if not out.get("value"):
-                probs.append(f"'{inv.get('label', '')[:50]}' false at {where}: {inv['expr'][:100]}")
+                probs.append(f"'{inv.get('label', '')[:50]}' false at {where}: {inv['expr'][:100]}"
+                             + _actual_values(js, p, inv["expr"]))
                 break
     results["C3"] = _res("C3", "fail" if probs or not invs else "pass",
-                         "; ".join(probs[:4]) or (f"{len(invs)} invariants hold at defaults + presets" if invs else "no invariants"))
+                         "; ".join(probs[:8]) or (f"{len(invs)} invariants hold at defaults + presets" if invs else "no invariants"))
 
     # C4 every {key} in live equations and every intermediates key resolves in r (or p) at defaults,
     # otherwise the page shows "?" / "—" placeholders instead of numbers
@@ -612,6 +614,18 @@ def unverified_expectations(spec, compute_js) -> tuple:
     bad_i = [i.get("label", "") for i in spec.get("invariants", [])
              if not all(holds(p, i.get("expr", "false")) for p in settings)]
     return bad_t, bad_i
+
+
+def _actual_values(js, params, expr: str) -> str:
+    """' [actual: r.K=0.38, r.P=1.2]' for the r.<key> values an expression references, so a repair can
+    tell whether the expectation or the computation is wrong."""
+    keys = list(dict.fromkeys(re.findall(r"\br\.([A-Za-z_$][\w$]*)", expr or "")))[:4]
+    vals = []
+    for k in keys:
+        out, _ = js.call("watch", json.dumps(params), k)
+        if out and out.get("present"):
+            vals.append(f"r.{k}={str(out.get('sig'))[:60]}")
+    return f" [actual: {', '.join(vals)}]" if vals else ""
 
 
 def exploration_facts(spec, compute_js) -> list:

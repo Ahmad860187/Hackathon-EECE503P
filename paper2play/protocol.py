@@ -160,11 +160,19 @@ def _close_truncated(s: str) -> str:
     return t + "".join(reversed(stack))
 
 
+# LaTeX commands whose leading backslash JSON would silently decode as a control character
+# (backslash-f + 'rac' in a frac command, backslash-t + 'heta', ...): double those backslashes.
+_LATEX_ESC = re.compile(r"(?<!\\)\\(?=(?:frac|theta|tau|times|text|tilde|top|beta|bar|boldsymbol|bigl|bigr|"
+                        r"nu|nabla|neq|ne|rho|right|rightarrow|rangle|forall|binom|bmod|nmid|rm|bf|bm)(?![A-Za-z]))")
+_BAD_ESC = re.compile(r'(?<!\\)\\(?!["\\/bfnrtu])')
+
+
 def parse_json_lenient(s: str):
     """Return (obj, error_or_None, repaired_flag)."""
     if s is None:
         return None, "empty", False
     s = strip_fences(s)
+    s = _LATEX_ESC.sub(r"\\\\", s)
     start = s.find("{")
     if start == -1:
         return None, "no JSON object found", False
@@ -182,7 +190,8 @@ def parse_json_lenient(s: str):
         return None, "JSON is not an object", False
     clean = _strip_json_comments_and_commas(_strip_json_comments_and_commas(body))
     tail = _strip_json_comments_and_commas(_strip_json_comments_and_commas(s[start:]))
-    for candidate in (clean, _close_truncated(tail)):
+    for candidate in (clean, _close_truncated(tail), _BAD_ESC.sub(r"\\\\", clean),
+                      _close_truncated(_BAD_ESC.sub(r"\\\\", tail))):
         try:
             obj = json.loads(candidate, strict=False)
             if isinstance(obj, dict):

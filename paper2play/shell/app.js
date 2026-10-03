@@ -246,7 +246,7 @@
       w.set = function (v) { c.opts.forEach(function (op, i) { if (op.value === v) sel.value = String(i); }); };
     } else if (c.type === 'toggle') {
       var cb = h('input', { type: 'checkbox', id: id, role: 'switch', 'aria-describedby': helpId });
-      cb.addEventListener('change', function () { p[c.id] = !!cb.checked; changed(); });
+      cb.addEventListener('change', function () { p[c.id] = !!cb.checked; cb.setAttribute('aria-checked', cb.checked ? 'true' : 'false'); changed(); });
       add(wrap, h('label', { 'class': 'switch', 'for': id }, [cb, h('span', { text: c.label })]), help);
       w.set = function (v) { cb.checked = !!v; cb.setAttribute('aria-checked', v ? 'true' : 'false'); };
     } else if (c.type === 'matrix' || c.type === 'vector') {

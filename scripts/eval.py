@@ -371,6 +371,10 @@ def main(argv=None) -> int:
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.tag}" if args.tag else "") + ("-dry" if args.dry_run else "")
     root = RUNS_DIR / stamp
+    n = 2
+    while root.exists():          # two evals started in the same second
+        root = RUNS_DIR / f"{stamp}-{n}"
+        n += 1
     root.mkdir(parents=True, exist_ok=False)
     meta = {"started": datetime.now().isoformat(timespec="seconds"), "model": args.model or "dry-run",
             "cases": cases, "runs": args.runs, "parallel": args.parallel, "no_excerpt": args.no_excerpt,

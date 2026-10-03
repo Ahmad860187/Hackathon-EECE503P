@@ -16,6 +16,9 @@ import urllib.request
 from pathlib import Path
 
 EXCERPT_CHARS = 6000
+MAX_LOCAL_BYTES = 2_000_000          # read at most 2 MB of a local text/HTML source
+BINARY_SUFFIXES = {".zip", ".gz", ".tar", ".7z", ".rar", ".exe", ".dll", ".bin", ".png", ".jpg",
+                   ".jpeg", ".gif", ".mp4", ".mp3", ".xlsx", ".pptx"}
 FETCH_TIMEOUT_S = 4.0
 FETCH_TOTAL_S = 8.0   # html -> abs -> pdf; a blocked network fails fast (DNS/connect errors)
 INLINE_MIN_CHARS = 400
@@ -222,7 +225,11 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
                                     "detail": f"read Word document {c.name}"}
                         notes.append(f"file {c.name}: no extractable Word text")
                         break
-                    raw = c.read_text(encoding="utf-8", errors="replace")
+                    data = c.read_bytes()[:MAX_LOCAL_BYTES]
+                    if b"\x00" in data[:8192] or c.suffix.lower() in BINARY_SUFFIXES:
+                        notes.append(f"file {c.name}: binary or unsupported file type, not read")
+                        break
+                    raw = data.decode("utf-8", errors="replace")
                     title = ""
                     if c.suffix.lower() in (".html", ".htm") or "<html" in raw[:2000].lower():
                         title, raw = html_to_text(raw)

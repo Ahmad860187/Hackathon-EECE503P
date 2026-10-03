@@ -336,7 +336,11 @@ def default_params(spec: dict) -> dict:
 
 def merged_params(spec: dict, partial) -> dict:
     p = default_params(spec)
+    ranges = {c.get("id"): c for c in spec.get("controls", []) if c.get("type") in ("range", "number")}
     if isinstance(partial, dict):
         for k, v in partial.items():
+            c = ranges.get(k)
+            if c and isinstance(v, (int, float)) and not isinstance(v, bool)                     and isinstance(c.get("min"), (int, float)) and isinstance(c.get("max"), (int, float)):
+                v = min(max(v, c["min"]), c["max"])   # the page's slider cannot go outside its range
             p[k] = copy.deepcopy(v)
     return p

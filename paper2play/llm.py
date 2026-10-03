@@ -54,6 +54,11 @@ class _HTTPFailure(Exception):
         self.message = message
         self.retryable = retryable
         self.retry_after = retry_after
+        self.unsent = False   # True when the request never reached the provider (not billable)
+
+
+# Fallback order when a model cannot run with reasoning disabled.
+REASONING_LADDER = ({"effort": "low", "exclude": True}, {"effort": "minimal", "exclude": True})  # low writes valid code; minimal if low runs out of budget
 
 
 def reasoning_setting() -> dict:
@@ -103,6 +108,7 @@ class OpenRouterClient:
         self.sleep = sleep
         self.send_reasoning = True
         self.reasoning_override = None
+        self._tried_reasoning = []
 
     # ------------------------------------------------------------------ HTTP
     def _post(self, body: dict, deadline_s: float):
@@ -116,6 +122,11 @@ class OpenRouterClient:
             resp = self.session.post(OPENROUTER_URL, headers=headers, data=json.dumps(body),
                                      timeout=(min(10.0, max(1.0, deadline_s)), max(1.0, deadline_s)),
                                      stream=True)
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+            # proxy / DNS / refused / connect timeout: nothing was sent, so nothing can be billed
+            fail = _HTTPFailure(None, f"network error: {type(e).__name__}", True)
+            fail.unsent = True
+            raise fail from None
         except requests.exceptions.Timeout as e:
             raise _HTTPFailure(None, f"timeout: {type(e).__name__}", True) from None
         except requests.exceptions.RequestException as e:
@@ -198,13 +209,25 @@ class OpenRouterClient:
                 elapsed = time.monotonic() - t_start
                 # An HTTP error status means nothing was generated; a timeout / dropped
                 # connection may still be billed, so charge it conservatively (requested max).
-                if f.status:
+                if f.status or f.unsent:
                     self.budget.record_usage(0, 0, max_tokens)
                 else:
                     self.budget.record_usage(None, None, max_tokens)
                 last_err = f.message
                 # Some providers reject the `reasoning` field with a generic 400; retry once without it.
                 rejected_reasoning = self.send_reasoning and f.status in (400, 422)
+                low = f.message.lower()
+                on_ladder = self.reasoning_override in REASONING_LADDER
+                if rejected_reasoning and (on_ladder or any(k in low for k in (
+                        "mandatory", "cannot be disabled", "must be enabled", "required", "not supported to disable"))):
+                    # reasoning cannot be switched off for this model: ask for the least of it instead
+                    nxt = next((lvl for lvl in REASONING_LADDER if lvl not in self._tried_reasoning), None)
+                    if nxt is not None:
+                        self._tried_reasoning.append(nxt)
+                        self.reasoning_override = nxt
+                        self.trace.event(stage, "llm_call", "retry", purpose=purpose,
+                                         detail=f"reasoning is mandatory for this model; retrying with {nxt}")
+                        continue
                 self.trace.event(stage, "llm_call", "error", call=call_no, model=self.model,
                                  purpose=purpose, attempt=attempts, http_status=f.status,
                                  elapsed_s=round(elapsed, 2), max_tokens=max_tokens,
@@ -255,6 +278,14 @@ class OpenRouterClient:
                         self.reasoning_override = {"enabled": False, "exclude": True}
                         self.trace.event(stage, "llm_call", "retry", purpose=purpose,
                                          detail="reasoning consumed the budget; retrying with reasoning disabled")
+                        continue
+                    nxt = next((lvl for lvl in REASONING_LADDER if lvl not in self._tried_reasoning), None)
+                    if nxt is not None and self.send_reasoning:
+                        # the model reasons anyway (or reasoning is mandatory): request the minimum
+                        self._tried_reasoning.append(nxt)
+                        self.reasoning_override = nxt
+                        self.trace.event(stage, "llm_call", "retry", purpose=purpose,
+                                         detail=f"reasoning consumed the budget; retrying with {nxt}")
                         continue
                     raise LLMError(last_err)
                 continue
