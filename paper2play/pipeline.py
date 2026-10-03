@@ -323,6 +323,7 @@ class Run:
                 tr.event("generate", "give_up", "error", detail=str(e)[:300])
 
             n_rep = 0
+            sent_repairs = set()
             while best is not None and n_rep < MAX_REPAIRS and chk.failing(best.checks):
                 req, opt = self.repair_targets(best)
                 if not req:
@@ -343,8 +344,15 @@ class Run:
                         rsys = load_prompt("repair.md")
                         if "RENDER" in req or "RENDER" in opt:
                             rsys += "\n\n" + load_prompt("kit.md")
-                        msgs = [{"role": "system", "content": rsys},
-                                {"role": "user", "content": self.repair_message(best, req, opt)}]
+                        umsg = self.repair_message(best, req, opt)
+                        if umsg in sent_repairs:
+                            # The previous repair did not improve the best candidate, so the request
+                            # would be identical; a deterministic-ish model would return the same fix.
+                            tr.event("repair", "stop", "skip", candidate=label,
+                                     detail="identical repair request already tried; stopping to save tokens")
+                            break
+                        sent_repairs.add(umsg)
+                        msgs = [{"role": "system", "content": rsys}, {"role": "user", "content": umsg}]
                         res = client.chat(msgs, REPAIR_CAP, stage="repair", purpose=label, min_tokens=800)
                         cand = self.apply_repair(best, res.text, label)
                 except BudgetStop as e:

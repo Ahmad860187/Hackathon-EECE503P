@@ -60,7 +60,7 @@ var __p2p = (function(){
     var out = {nan: find(r, isnan, 'r', 0), missing: [], nonfinite: [], keys: Object.keys(r).slice(0, 40)};
     for (var i=0;i<keys.length;i++){
       var v = get(r, keys[i]);
-      if (v === undefined || v === null) out.missing.push(keys[i]);
+      if (v === undefined) out.missing.push(keys[i]);  // null = "not applicable" (e.g. no mixed equilibrium)
       else { var b = find(v, nonfinite, keys[i], 0); if (b) out.nonfinite.push(b); }
     }
     try { out.sig = JSON.stringify(r); } catch (e) { return {error: 'result not JSON-serialisable: ' + errstr(e)}; }

@@ -1,0 +1,20 @@
+Source: Vaswani et al., "Attention Is All You Need" (NeurIPS 2017), Section 3.2.1 "Scaled Dot-Product
+Attention". Paraphrased excerpt, checked against https://arxiv.org/html/1706.03762v7.
+
+The input consists of queries and keys of dimension d_k and values of dimension d_v. For each query
+the dot products with all keys are computed, each is divided by sqrt(d_k), and a softmax is applied to
+obtain the weights on the values. In practice the queries, keys and values are packed into matrices
+Q, K and V and the output is computed as
+
+    Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V        (Eq. 1)
+
+The two most common attention functions are additive attention and dot-product (multiplicative)
+attention. Dot-product attention is identical to this algorithm except for the scaling factor
+1/sqrt(d_k). It is much faster and more space-efficient in practice because it can use highly
+optimised matrix multiplication code. For small d_k both mechanisms perform similarly, but additive
+attention outperforms unscaled dot-product attention for larger d_k. The authors suspect that for
+large d_k the dot products grow large in magnitude, pushing the softmax into regions where it has
+extremely small gradients; to counteract this they scale the dot products by 1/sqrt(d_k).
+
+Footnote 4: if the components of q and k are independent random variables with mean 0 and
+variance 1, then their dot product q.k = sum_i q_i k_i has mean 0 and variance d_k.

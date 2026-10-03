@@ -68,11 +68,24 @@ repairs and totals. Credentials, headers and reasoning text are never logged.
 
 ## Evaluation (development only)
 
-- 19 practice cases in `eval/cases/` cover ML, information theory, epidemiology, biochemistry, ecology,
-  genetics, economics, finance, sociology and signal processing. They also include 7 cases derived from
-  **SciCode** and **TheoremExplainBench** (physics, chemistry, materials, electronics). Independently
-  computed reference values were used for grading during development and are deliberately not part of
-  the repository or the agent.
+- **34 test cases** in `eval/cases/`, each in the 3-field input format with a short excerpt. Provenance
+  and licences are in `eval/BENCHMARKS.md`. Independently computed reference values were used for grading
+  during development only. They are not used by the agent, and the generated answer-key files are not in
+  the repository.
+
+  | Set | Cases | Source |
+  |---|---|---|
+  | Public examples from the brief | 2 | Attention (Vaswani et al. 2017 §3.2.1), entropy (Shannon 1948 §6) |
+  | Core practice set | 10 | Classic papers across epidemiology, biochemistry, ecology, genetics, economics, finance, sociology, signals, optimisation, diffusion models |
+  | **SciCode** (NeurIPS 2024, Apache-2.0) | 4 | Problems 34, 38, 39, 47: p-n junction, Lennard-Jones, reciprocal lattice, DBR. Values cross-checked against SciCode gold code where available. |
+  | **TheoremExplainBench** (ACL 2025, MIT) | 6 | Theorems 190, 207, 233 (sigma-delta, van der Waals, Langmuir) and 112, 128, 147 (Carnot, Dijkstra, Arrhenius) |
+  | **PaperVoyager** (arXiv 2603.22999) topics | 5 | Paper-to-interactive-system benchmark topics: Raft election, CPU scheduling, page replacement, cuckoo hashing, Lorenz attractor. These cite the original papers; PaperVoyager's data is not released. |
+  | Input-format stress set | 7 | Bayes base rates, Kalman filter, dropout, batch norm, pendulum, Nash 2×2, PageRank. Covers arXiv abs/pdf/html links, bare `arXiv:` ids, DOIs and non-arXiv PDFs. |
+
+  Results across 4 rounds (each case run fresh): 89% → 95% of pages passing every acceptance check, with
+  about 11k total tokens and about 50 s per case on average, and every run within the budget. On the 15
+  unseen batch-2/PaperVoyager-style cases 13/15 passed. PaperQuiz (a separate model answers 5 questions
+  using only the page text) scored 24/25 across attention, SIR, Black–Scholes, Lemons and page replacement.
 - `scripts/eval.py` runs cases × runs into fresh directories and reports accept rate, tokens, latency
   and failing checks. `--no-excerpt` simulates OpenRouter-only network access.
 - `scripts/quiz_eval.py` measures teaching clarity: a separate model answers multiple-choice questions
@@ -86,8 +99,11 @@ repairs and totals. Credentials, headers and reasoning text are never logged.
 ## Credits and reuse
 
 - [quickjs](https://pypi.org/project/quickjs/) (MIT): JavaScript engine for checks. [requests](https://pypi.org/project/requests/) (Apache-2.0).
-- Development cases derived from [SciCode](https://github.com/scicode-bench/SciCode) (Apache-2.0) and
-  [TheoremExplainBench](https://arxiv.org/abs/2502.19400) (MIT). The quiz evaluation method is from
-  [Paper2Poster](https://arxiv.org/abs/2505.21497). See `eval/BENCHMARKS.md`.
+- Development cases derived from [SciCode](https://github.com/scicode-bench/SciCode) (Apache-2.0;
+  problems 34, 38, 39, 47) and [TheoremExplainBench](https://arxiv.org/abs/2502.19400) (MIT; theorems
+  112, 128, 147, 190, 207, 233). Topics for five cases follow
+  [PaperVoyager](https://arxiv.org/abs/2603.22999), and no PaperVoyager data or code is used. The
+  PaperQuiz evaluation method is re-implemented from [Paper2Poster](https://arxiv.org/abs/2505.21497) (MIT),
+  also used by [Paper2Web](https://arxiv.org/abs/2510.15842). See `eval/BENCHMARKS.md`.
 - Built with the help of an AI coding assistant (Claude Code), as permitted by the hackathon rules.
   All code was reviewed and tested by the team.
