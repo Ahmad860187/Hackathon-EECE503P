@@ -473,7 +473,11 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
                         break
                 if changed_at is not None:
                     break
-            if changed_at is None:
+            if changed_at is None and c["type"] in ("toggle", "select") and render_js and re.search(
+                    r"\bp\s*(?:\.\s*" + re.escape(c["id"]) + r"\b|\[\s*['\"]" + re.escape(c["id"]) + r"['\"]\s*\])",
+                    render_js):
+                conditional.append(c["id"] + " (visual only)")  # display toggle: render reads it
+            elif changed_at is None:
                 dead.append(c["id"])
             elif changed_at:
                 conditional.append(c["id"])

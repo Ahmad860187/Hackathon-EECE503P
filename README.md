@@ -4,7 +4,7 @@ An agent that turns a research-paper reference and a focused learning brief into
 offline, interactive HTML page** that teaches the mechanism to an engineering undergraduate. Learners
 change inputs and watch the effect.
 
-**Team:** _TEAM MEMBERS_
+**Team:** Ahmad Karnib, Mohamad Nasrallah, Hasan Nasrallah
 
 ## Run
 
