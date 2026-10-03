@@ -1,12 +1,14 @@
 KIT API (global `kit`; each draw fn appends one responsive SVG panel to `el` and returns it; colours, transitions, ghost of previous state and accent are automatic):
 - kit.plot(el,{title,x:{label,min?,max?,log?},y:{label,min?,max?},series:[{name,points:[[x,y],…],dashed?,area?,highlight?}],markers:[{x,y,label}],vlines:[{x,label}],hlines:[{y,label}],note?})
-- kit.bars(el,{title,labels:[],values:[],unit?,max?,highlight:[idx],fmt?,secondary?:{name,values:[]}})
+- kit.bars(el,{title,name?,labels:[],values:[],unit?,max?,highlight:[idx],fmt?,secondary?:{name,values:[]}})  (name = legend for values when secondary is set)
 - kit.matrix(el,{title,data:[[…]],rowLabels?,colLabels?,fmt?,scale:'seq'|'div',highlight:[[i,j]]})
 - kit.pipeline(el,{stages:[{title,kind:'matrix'|'vector'|'scalar'|'text',data,caption?}],ops:['op label',…]})  (ops between stages)
 - kit.timeline(el,{length,t0?,fps?,draw:(t,sub)=>{…}})  t = 0..length-1 (starts at last frame unless t0); play/pause/step/scrubber; draw into `sub` with other kit calls
 - kit.grid(el,{title,cells:[[v,…]],palette?:{value:cssColor},labels?:{value:text},cellSize?})
 - kit.graph(el,{title,nodes:[{id,label,x,y,value?}],edges:[{from,to,weight?,label?}],highlight:[id]})  x,y in 0..1
 - kit.vec2d(el,{title,range,vectors:[{x,y,label,from?:[x,y]}],handles:[{id,x,y}]})  range R or [lo,hi]; vector x,y are components drawn from `from` (default origin); dragging handle id sets controls id_x,id_y (define them as range controls)
+- kit.flow(el,{title,nodes:[{id,label,value?,unit?,x?,y?,highlight?}],edges:[{from,to,sign?:'+'|'-',weight?,label?}]})  cause→effect / block diagram for non-math mechanisms; boxes show live values; sign + more→more, − more→less; width ∝ |weight|; x,y in 0..1 (omit → auto layout)
+- kit.compare(el,{title,left:{title,draw:(sub)=>{…}},right:{title,draw:(sub)=>{…}},note?})  without vs with / before vs after; draw each side with kit calls, same axis ranges
 - kit.callout(el,text,kind?)  kind 'info'|'warn'|'key'
 - kit.svg(el,w,h) raw SVG root (viewBox 0 0 w h); kit.svgEl(tag,attrs,parent)
 - kit.fmt(x,d=3) · kit.color(i) · kit.accent · kit.rng(seed)→()=>[0,1) · kit.set(id,value)

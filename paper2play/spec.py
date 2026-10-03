@@ -143,6 +143,23 @@ def _fix_control(c: dict, notes: list):
 
 TOP_LEVEL_KEYS = ("title", "paper", "idea", "why", "symbols", "equations", "controls", "intermediates",
                   "visual", "explorations", "limitation", "claims", "invariants", "tests")
+# Only structural keys that cannot legitimately appear nested (e.g. never hoist explorations[0].why).
+HOISTABLE_KEYS = ("symbols", "equations", "controls", "intermediates", "explorations", "limitation",
+                  "claims", "invariants", "tests")
+
+
+def _find_nested(obj, key, path="", depth=0):
+    """Breadth-first search for a dict (below the top level) holding `key`; returns (dict, path)."""
+    queue = [(v, f"{k}") for k, v in obj.items() if isinstance(v, (dict, list))]
+    while queue:
+        node, where = queue.pop(0)
+        if isinstance(node, dict):
+            if key in node:
+                return node, where
+            queue.extend((v, f"{where}.{k}") for k, v in node.items() if isinstance(v, (dict, list)))
+        else:
+            queue.extend((v, f"{where}[{i}]") for i, v in enumerate(node) if isinstance(v, (dict, list)))
+    return None
 
 
 def normalize_spec(spec: dict, case: dict, origin: str) -> tuple:
@@ -151,14 +168,14 @@ def normalize_spec(spec: dict, case: dict, origin: str) -> tuple:
     s = copy.deepcopy(spec) if isinstance(spec, dict) else {}
     # Models sometimes nest top-level keys inside a sibling object (seen: "explorations" inside
     # "visual"). Hoist any missing top-level key found one level down.
-    for key in TOP_LEVEL_KEYS:
+    for key in HOISTABLE_KEYS:
         if key in s:
             continue
-        for parent, val in list(s.items()):
-            if isinstance(val, dict) and key in val:
-                s[key] = val.pop(key)
-                notes.append(f"'{key}' was nested inside '{parent}'; moved to top level")
-                break
+        found = _find_nested(s, key)
+        if found:
+            holder, where = found
+            s[key] = holder.pop(key)
+            notes.append(f"'{key}' was nested inside '{where}'; moved to top level")
     s["title"] = _s(s.get("title")) or _s(case.get("focus"))[:80] or "Interactive explainer"
     paper = s.get("paper") if isinstance(s.get("paper"), dict) else {}
     for k in ("title", "authors", "year", "url", "section"):

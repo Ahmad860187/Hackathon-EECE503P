@@ -7,6 +7,7 @@ regression) is promoted. Outputs are always written (fallback page if needed).
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 from dataclasses import dataclass, field
@@ -365,8 +366,39 @@ class Run:
 
         return self.write_outputs(best, reason)
 
+    def prune_unverified(self, best):
+        """After repairs: drop model-written tests/invariants that are still false, so the page only
+        displays checks that actually hold. Recorded in the trace; returns the candidate to publish."""
+        if best is None or best.spec is None or not best.accepted:
+            return best
+        if self.budget.remaining_time() < 40:
+            return best
+        if not any(c["id"] in ("C1", "C3", "C4") and c["result"] == "fail" for c in best.checks):
+            return best
+        bad_t, bad_i = chk.unverified_expectations(best.spec, best.compute)
+        bad_live = [eq.get("label", "") for eq in best.spec.get("equations", [])
+                    if eq.get("live") and "live equation '" + str(eq.get("label", ""))[:30] in
+                    next((c["detail"] for c in best.checks if c["id"] == "C4"), "")]
+        if not bad_t and not bad_i and not bad_live:
+            return best
+        spec = copy.deepcopy(best.spec)
+        spec["tests"] = [t for t in spec.get("tests", []) if t.get("name", "") not in bad_t]
+        spec["invariants"] = [i for i in spec.get("invariants", []) if i.get("label", "") not in bad_i]
+        for eq in spec.get("equations", []):
+            if eq.get("label", "") in bad_live:
+                eq["live"] = ""
+        self.trace.event("finalize", "prune_unverified", "ok", candidate=best.label,
+                         removed_tests=bad_t, removed_invariants=bad_i, removed_live_equations=bad_live,
+                         detail="model-written expectations still false after repairs were removed from "
+                                "the page (unverified); the computation itself is unchanged")
+        cand = Candidate(label=best.label + "+pruned", spec_in=spec, compute=best.compute,
+                         render=best.render, parsed=best.parsed)
+        cand = self.evaluate(cand)
+        return cand if cand.accepted else best
+
     def write_outputs(self, best, reason: str) -> int:
         tr = self.trace
+        best = self.prune_unverified(best)
         out_html = self.out_dir / "index.html"
         page, kind = None, "fallback"
         if best is not None and best.spec is not None and best.html is not None:
@@ -386,7 +418,8 @@ class Run:
             if s and s in page:
                 page = page.replace(s, "[redacted]")
         self.out_dir.mkdir(parents=True, exist_ok=True)
-        out_html.write_text(page, encoding="utf-8", newline="\n")
+        # errors="replace": a lone surrogate from model output must not turn a good page into a crash
+        out_html.write_text(page, encoding="utf-8", errors="replace", newline="\n")
         ok = best is not None and kind == "assembled" and best.accepted
         tr.event("output", "write_index_html", "ok", kind=kind, bytes=len(page),
                  candidate=best.label if best else None, accepted=ok)

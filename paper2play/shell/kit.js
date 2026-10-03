@@ -19,6 +19,9 @@ var kit = (function () {
   var TWEEN_MS = 250;
   var BURST_MS = 700;
   var FONT = 12;
+  /* Ink class for text drawn on a shaded cell of fill-opacity a: the light and dark
+     themes flip to the contrasting ink at different shades (CSS maps the classes). */
+  function onCls(a) { return a > 0.86 ? ' k-on-d k-on-l' : (a > 0.66 ? ' k-on-d' : ''); }
 
   var st = {
     n: 0, store: {}, names: {}, nNames: 0, watch: null, width: 0, noMotion: false,
@@ -224,21 +227,50 @@ var kit = (function () {
     if (extra) for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) a[k] = extra[k];
     return svgEl('text', a, parent);
   }
-  function titleRow(svg, title, x, W, ghostNote) {
-    if (title) txt(svg, x, 17, trunc(title, (W - 20) / 7.6), 'k-title');
+  /* Panel titles wrap (up to 3 lines) instead of truncating. titleLines is pure so
+     each primitive can reserve the extra height (titleExtra) before drawing. */
+  var TITLE_LH = 17;
+  function ghostText(g, W) { return typeof g === 'string' ? g : (W < 520 ? 'previous' : 'before last change'); }
+  function titleLines(title, W, x, ghostNote) {
+    title = str(title);
+    if (!title) return [];
+    var full = W - (x || 0) - 6;
+    var first = full - (ghostNote ? tw(ghostText(ghostNote, W)) + 44 : 0);
+    if (first < 140) first = full;
+    // the first line shares its row with the ghost note; later lines use the full width
+    var c1 = Math.max(4, first / 7.2), c2 = Math.max(4, full / 7.2);
+    if (title.length <= c1) return [title];
+    var words = title.split(/\s+/).filter(Boolean), cur = '', k = 0;
+    for (; k < words.length; k++) {
+      var nx = cur ? cur + ' ' + words[k] : words[k];
+      if (nx.length > c1 && cur) break;
+      cur = nx;
+    }
+    if (cur.length > c1) cur = trunc(cur, c1);
+    return [cur].concat(k < words.length ? wrapWords(words.slice(k).join(' '), c2, 2) : []);
+  }
+  function titleExtra(title, W, x, ghostNote) {
+    var n = titleLines(title, W, x, ghostNote).length;
+    return n > 1 ? (n - 1) * TITLE_LH : 0;
+  }
+  /* reserve: keep room for the ghost note even before a ghost exists, so the layout
+     does not jump after the first change */
+  function titleRow(svg, title, x, W, ghostNote, reserve) {
+    titleLines(title, W, x, reserve || ghostNote).forEach(function (l, k) { txt(svg, x, 17 + k * TITLE_LH, l, 'k-title'); });
     if (ghostNote) {
-      var gx = W - 6;
-      txt(svg, gx, 17, 'before last change', 'k-muted', { 'text-anchor': 'end' });
-      svgEl('line', { x1: gx - tw('before last change') - 30, x2: gx - tw('before last change') - 8, y1: 13, y2: 13, 'class': 'k-ghost' }, svg);
+      var gx = W - 6, gt = ghostText(ghostNote, W);
+      txt(svg, gx, 17, gt, 'k-muted', { 'text-anchor': 'end' });
+      if (ghostNote === true) svgEl('line', { x1: gx - tw(gt) - 30, x2: gx - tw(gt) - 8, y1: 13, y2: 13, 'class': 'k-ghost' }, svg);
     }
   }
   function emptyState(el, title, message, W) {
     W = W || widthOf(el);
-    var H = title ? 120 : 96;
+    var tEx = titleExtra(title, W, 8, false);
+    var H = (title ? 120 : 96) + tEx;
     var s = makeSvg(el, W, H, (title ? title + ': ' : '') + message);
     s.classList.add('kit-empty');
-    if (title) txt(s, 8, 17, trunc(title, W / 7.6), 'k-title');
-    var y0 = title ? 28 : 6;
+    titleRow(s, title, 8, W, false);
+    var y0 = (title ? 28 : 6) + tEx;
     svgEl('rect', { x: 4, y: y0, width: W - 8, height: H - y0 - 4, rx: 8, 'class': 'k-empty-box' }, s);
     var lines = wrapWords(message, (W - 40) / 7, 3);
     lines.forEach(function (l, i) {
@@ -436,7 +468,9 @@ var kit = (function () {
       hlines.forEach(function (m) { ys.push(num(m.y)); });
 
       var title = str(o.title);
-      var top = title || ghost.length ? 30 : 12;
+      var tEx = titleExtra(title, W, 4, true);
+      var top = (title || ghost.length ? 30 : 12) + tEx;
+      H += tEx;
       var labelled = series.filter(function (s) { return s.name && lastFinite(s.pts); });
       var xDataMin = Math.min.apply(null, xs.filter(isNum).concat([Infinity])), xDataMax = Math.max.apply(null, xs.filter(isNum).concat([-Infinity]));
       var xEnd = isNum(num(xo.max)) ? num(xo.max) : xDataMax, xSpan = Math.abs(xEnd - xDataMin) || 1;
@@ -461,7 +495,7 @@ var kit = (function () {
       var svg = makeSvg(el, W, H, aria);
       if (series.some(function (s) { return s.highlight; }) || isWatched(title)) svg.classList.add('kit-has-focus');
       if (isWatched(title)) svg.classList.add('kit-watched');
-      titleRow(svg, title, 4, W, ghost.length > 0);
+      titleRow(svg, title, 4, W, ghost.length > 0, true);
 
       // grid + ticks
       var g = svgEl('g', { 'class': 'k-axes' }, svg);
@@ -574,7 +608,8 @@ var kit = (function () {
       inside.forEach(function (l) {
         var c = colOf(l.s);
         if (Math.abs(l.ly - l.y) > 5) svgEl('line', { x1: l.x + 2, y1: l.y, x2: l.x + 6, y2: l.ly, stroke: c, 'class': 'k-leader' }, svg);
-        txt(svg, l.x + 7, l.ly + 4, trunc(l.s.name, 16), 'k-series-label k-halo' + (l.s.highlight ? ' k-strong' : ''), { fill: c });
+        var nm = trunc(l.s.name, 16), flip = l.x + 7 + tw(nm) > W - 2;
+        txt(svg, flip ? l.x - 7 : l.x + 7, l.ly + 4, nm, 'k-series-label k-halo' + (l.s.highlight ? ' k-strong' : ''), { fill: c, 'text-anchor': flip ? 'end' : null });
       });
 
       // markers
@@ -629,7 +664,9 @@ var kit = (function () {
       if (isNum(fmax) && fmax >= hi) hi = fmax;
       if (isNum(fmin) && fmin <= lo) lo = fmin;
       var title = str(o.title);
-      var top = (title || mem.ghost ? 30 : 10) + (sec ? 20 : 0) + 12;
+      var tEx = titleExtra(title, W, 4, true);
+      var legY = ((title || mem.ghost) ? 44 : 22) + tEx;
+      var top = (title || mem.ghost ? 30 : 10) + (sec ? 20 : 0) + 12 + tEx;
       var maxLab = 0; labels.forEach(function (l) { maxLab = Math.max(maxLab, l.length); });
       var valStr = function (v) { return isNum(v) ? fmt(v, d) + (unit && unit.length <= 3 ? unit : '') : '—'; };
 
@@ -640,10 +677,14 @@ var kit = (function () {
       var H, svg, X, Y, dom, base;
       var primaryColor = colorFor(o.name || '__bars');
       var secColor = sec ? colorFor(sec.name) : null;
+      // restraint: the accent is for one focal element; a large highlighted set is
+      // shown by muting the rest instead of painting many bars orange
+      var nHi = Object.keys(hiSet).length, focusSet = nHi > 3 && nHi > n * 0.25;
+      var hiCol = focusSet ? primaryColor : 'var(--accent)', hiTick = focusSet ? ' k-strong' : ' k-accent';
       var aria = (title || 'Bar chart') + ': ' + labels.map(function (l, i) { return l + ' ' + valStr(vals[i]); }).join(', ');
 
       if (!horiz) {
-        H = Math.round(clamp(W * 0.5, 210, 340)) + (sec ? 20 : 0);
+        H = Math.round(clamp(W * 0.5, 210, 340)) + (sec ? 20 : 0) + tEx;
         var bottom = 38;
         var ph = H - top - bottom;
         dom = axisDomain([lo, hi], isNum(fmin) ? lo : NaN, isNum(fmax) ? hi : NaN, false, Math.max(2, Math.round(ph / 46)));
@@ -654,8 +695,8 @@ var kit = (function () {
         Y = scaleOf(dom, top + ph, top);
         base = Y(clamp(0, dom.lo, dom.hi));
         svg = makeSvg(el, W, H, aria);
-        titleRow(svg, title, 4, W, !!mem.ghost);
-        if (sec) legendRow(svg, 4, (title || mem.ghost) ? 44 : 22, [[o.name || 'values', primaryColor], [sec.name, secColor]]);
+        titleRow(svg, title, 4, W, !!mem.ghost, true);
+        if (sec) legendRow(svg, 4, legY, [[o.name || 'values', primaryColor], [sec.name, secColor]]);
         dom.ticks.forEach(function (t) {
           svgEl('line', { x1: left, x2: left + pw, y1: Y(t), y2: Y(t), 'class': 'k-grid' }, svg);
           txt(svg, left - 6, Y(t) + 4, tickLabel(dom, t), 'k-tick', { 'text-anchor': 'end' });
@@ -665,11 +706,11 @@ var kit = (function () {
         var labChars = Math.max(3, Math.floor(band / 6.9));
         for (var i = 0; i < n; i++) {
           var x0 = left + i * band + gap;
-          drawVBar(svg, x0, bw, vals[i], pv[i], gv ? gv[i] : undefined, hiSet[i] ? 'var(--accent)' : primaryColor, anyHi && !hiSet[i], Y, base, valStr, band >= 26 || hiSet[i], labels[i]);
+          drawVBar(svg, x0, bw, vals[i], pv[i], gv ? gv[i] : undefined, hiSet[i] ? hiCol : primaryColor, anyHi && !hiSet[i], Y, base, valStr, band >= 26 || hiSet[i], labels[i]);
           if (sec) drawVBar(svg, x0 + bw + band * 0.04, bw, sec.values[i], ps[i], gs ? gs[i] : undefined, secColor, anyHi && !hiSet[i], Y, base, valStr, band >= 52, labels[i] + ' (' + sec.name + ')');
           var lines = wrapWords(labels[i], labChars, 2);
           lines.forEach(function (ln, k) {
-            txt(svg, left + (i + 0.5) * band, top + ph + 15 + k * 13, ln, 'k-tick' + (hiSet[i] ? ' k-accent' : ''), { 'text-anchor': 'middle' });
+            txt(svg, left + (i + 0.5) * band, top + ph + 15 + k * 13, ln, 'k-tick' + (hiSet[i] ? hiTick : ''), { 'text-anchor': 'middle' });
           });
         }
         svgEl('line', { x1: left, x2: left + pw, y1: base, y2: base, 'class': 'k-baseline' }, svg);
@@ -687,8 +728,8 @@ var kit = (function () {
         X = scaleOf(dom, leftH, leftH + pwH);
         base = X(clamp(0, dom.lo, dom.hi));
         svg = makeSvg(el, W, H, aria);
-        titleRow(svg, title, 4, W, !!mem.ghost);
-        if (sec) legendRow(svg, 4, (title || mem.ghost) ? 44 : 22, [[o.name || 'values', primaryColor], [sec.name, secColor]]);
+        titleRow(svg, title, 4, W, !!mem.ghost, true);
+        if (sec) legendRow(svg, 4, legY, [[o.name || 'values', primaryColor], [sec.name, secColor]]);
         dom.ticks.forEach(function (t) {
           svgEl('line', { x1: X(t), x2: X(t), y1: plotTop, y2: plotTop + n * rowH, 'class': 'k-grid' }, svg);
           txt(svg, X(t), tickTop + 10, tickLabel(dom, t), 'k-tick', { 'text-anchor': 'middle' });
@@ -697,9 +738,9 @@ var kit = (function () {
         for (var j = 0; j < n; j++) {
           var y0 = plotTop + j * rowH + 4;
           var bh = sec ? (rowH - 10) / 2 : rowH - 8;
-          drawHBar(svg, y0, bh, vals[j], pv[j], gv ? gv[j] : undefined, hiSet[j] ? 'var(--accent)' : primaryColor, anyHi && !hiSet[j], X, base, valStr, labels[j]);
+          drawHBar(svg, y0, bh, vals[j], pv[j], gv ? gv[j] : undefined, hiSet[j] ? hiCol : primaryColor, anyHi && !hiSet[j], X, base, valStr, labels[j]);
           if (sec) drawHBar(svg, y0 + bh + 2, bh, sec.values[j], ps[j], gs ? gs[j] : undefined, secColor, anyHi && !hiSet[j], X, base, valStr, labels[j] + ' (' + sec.name + ')');
-          var tl = txt(svg, leftH - 8, y0 + (rowH - 8) / 2 + 4, trunc(labels[j], (labW - 4) / 7), 'k-tick' + (hiSet[j] ? ' k-accent' : ''), { 'text-anchor': 'end' });
+          var tl = txt(svg, leftH - 8, y0 + (rowH - 8) / 2 + 4, trunc(labels[j], (labW - 4) / 7), 'k-tick' + (hiSet[j] ? hiTick : ''), { 'text-anchor': 'end' });
           if (labels[j].length > (labW - 4) / 7) svgEl('title', { text: labels[j] }, tl);
         }
         svgEl('line', { x1: base, x2: base, y1: plotTop, y2: plotTop + n * rowH, 'class': 'k-baseline' }, svg);
@@ -783,8 +824,10 @@ var kit = (function () {
   function drawCells(parent, x0, y0, M, cs, opt) {
     var stats = cellStats(M, opt.scale);
     var d = isNum(num(opt.fmt)) ? clamp(Math.round(num(opt.fmt)), 0, 8) : 2;
-    var maxChars = Math.floor((cs - 4) / 6.9);
+    var big = cs >= 46;
+    var maxChars = Math.floor((cs - 4) / (big ? 8 : 6.9));
     var showNums = maxChars >= 3;
+    var numCls = 'k-cell-num' + (big ? ' k-cell-num-l' : '');
     M.forEach(function (row, i) {
       row.forEach(function (v, j) {
         var x = x0 + j * cs, y = y0 + i * cs;
@@ -797,14 +840,14 @@ var kit = (function () {
         tween(function (a) { cell.setAttribute('fill-opacity', s2(0.06 + 0.86 * lerp(t0, t, a))); });
         if (!isNum(v)) svgEl('line', { x1: x + 4, y1: y + cs - 4, x2: x + cs - 4, y2: y + 4, 'class': 'k-nan' }, parent);
         if (showNums) {
-          txt(parent, x + cs / 2, y + cs / 2 + 4, fitNum(v, d, maxChars), t > 0.55 ? 'k-cell-num k-on' : 'k-cell-num', { 'text-anchor': 'middle' });
+          txt(parent, x + cs / 2, y + cs / 2 + (big ? 5 : 4), fitNum(v, d, maxChars), numCls + onCls(0.06 + 0.86 * t), { 'text-anchor': 'middle' });
         }
         var bv = opt.base && opt.base[i] ? opt.base[i][j] : undefined;
         if (isNum(bv) && isNum(v) && Math.abs(bv - v) > 1e-12 * Math.max(1, Math.abs(v)) && cs >= 16) {
           var up = v > bv, s = Math.min(5, cs / 6);
           var px = x + cs - s - 3, py = y + s + 2;
           svgEl('path', { d: up ? 'M' + r2(px - s) + ',' + r2(py + s / 2) + 'L' + r2(px) + ',' + r2(py - s) + 'L' + r2(px + s) + ',' + r2(py + s / 2) + 'Z'
-            : 'M' + r2(px - s) + ',' + r2(py - s / 2) + 'L' + r2(px) + ',' + r2(py + s) + 'L' + r2(px + s) + ',' + r2(py - s / 2) + 'Z', 'class': t > 0.55 ? 'k-delta k-on' : 'k-delta' }, parent);
+            : 'M' + r2(px - s) + ',' + r2(py - s / 2) + 'L' + r2(px) + ',' + r2(py + s) + 'L' + r2(px + s) + ',' + r2(py - s / 2) + 'Z', 'class': 'k-delta' + onCls(0.06 + 0.86 * t) }, parent);
         }
         if (opt.hi && opt.hi(i, j)) svgEl('rect', { x: x + 1.5, y: y + 1.5, width: cs - 3, height: cs - 3, 'class': 'k-cell-hi' }, parent);
       });
@@ -823,13 +866,18 @@ var kit = (function () {
       var rl = arr(o.rowLabels).map(str), cl = arr(o.colLabels).map(str);
       var rlw = 0; rl.forEach(function (l) { rlw = Math.max(rlw, l.length); });
       var labW = rl.length ? Math.min(W * 0.3, rlw * 7 + 10) : 0;
-      var cs = Math.floor(clamp((W - labW - 8) / C, 12, 56));
+      var cs = Math.floor(clamp((W - labW - 8) / C, 12, 64));
       if (R * cs > 560) cs = Math.max(8, Math.floor(560 / R));
       var title = str(o.title);
       var mem = remember(slot('matrix', title), M);
-      var top = (title || mem.ghost ? 28 : 6) + (cl.length ? 18 : 0);
-      var w = Math.max(labW + C * cs + 8, Math.min(W, Math.max(220, tw(title, 13.5) + 12, tw('colour: low 0.000 → high 0.000') + labW + 8)));
-      var H = top + R * cs + 26;
+      var gridW = labW + C * cs + 8;
+      var w = Math.max(gridW, Math.min(W, Math.max(240, Math.min(tw(title, 13.5) + 12, Math.max(gridW, 340)), tw('colour: low 0.000 → high 0.000') + labW + 8)));
+      var top = (title || mem.ghost ? 28 : 6) + (cl.length ? 18 : 0) + titleExtra(title, w, 2, false);
+      var st0 = cellStats(M, o.scale);
+      var legend = 'colour: ' + (st0.mode === 'div' ? 'negative ← 0 → positive (max |v| ' + fmt(Math.max(Math.abs(st0.lo), Math.abs(st0.hi)), 3) + ')' : 'low ' + fmt(st0.lo, 3) + ' → high ' + fmt(st0.hi, 3));
+      var legChars = Math.max(16, (w - labW - 2) / 6.5);
+      var legN = wrapWords(legend + ' · ▲▼ changed', legChars, 2).length; // reserve: no jump when ▲▼ appears
+      var H = top + R * cs + 12 + legN * 15;
       var svg = makeSvg(el, w, H, (title || 'Matrix') + ' (' + R + '×' + C + ')', true);
       titleRow(svg, title, 2, w, false);
       var hiMap = {};
@@ -847,9 +895,8 @@ var kit = (function () {
         hi: function (i, j) { return !!hiMap[i + ',' + j]; },
         prev: mem.prev, base: mem.ghost
       });
-      var legend = 'colour: ' + (stats.mode === 'div' ? 'negative ← 0 → positive (max |v| ' + fmt(Math.max(Math.abs(stats.lo), Math.abs(stats.hi)), 3) + ')' : 'low ' + fmt(stats.lo, 3) + ' → high ' + fmt(stats.hi, 3));
-      if (mem.ghost) legend += '  ▲▼ changed';
-      txt(svg, labW, top + R * cs + 17, trunc(legend, (w - labW) / 6.6), 'k-muted k-small-note');
+      if (mem.ghost) legend += ' · ▲▼ changed';
+      wrapWords(legend, legChars, 2).forEach(function (l, k) { txt(svg, labW, top + R * cs + 17 + k * 15, l, 'k-muted k-small-note'); });
       if (Object.keys(hiMap).length) svg.classList.add('kit-has-focus');
       if (isWatched(title)) svg.classList.add('kit-watched');
       if (o.note) note(el, o.note);
@@ -902,16 +949,22 @@ var kit = (function () {
           u.bw = Math.min(maxStageW, mw + 20); u.bh = u.lines.length * 16 + 14;
         }
         u.sw = Math.max(u.bw, Math.min(maxStageW, Math.max(80, tw(s.title || '', 13) + 4)));
+        u.tl = wrapWords(str(s.title) || ('stage ' + (i + 1)), u.sw / 7.4, 3);
         u.cap = s.caption ? wrapWords(s.caption, u.sw / 6.6, 3) : [];
-        u.h = 22 + u.bh + (u.cap.length ? u.cap.length * 15 + 6 : 0);
+        return u;
+      });
+      var HH = 8;
+      units.forEach(function (u) { HH = Math.max(HH, 8 + u.tl.length * 14); });
+      units.forEach(function (u, i) {
+        u.h = HH + u.bh + (u.cap.length ? u.cap.length * 15 + 6 : 0);
         var op = i > 0 ? (ops[i - 1] || '') : '';
         u.op = op;
         u.aw = i > 0 ? Math.max(48, tw(op, 13) + 18) : 0;
         u.w = u.aw + u.sw;
-        return u;
       });
       // flow layout
-      var pad = 6, gapY = 22, x = pad, y = (o.title || mem.ghost) ? 30 : 6, rowH = 0, rows = [[]];
+      var gText = '▲▼ = changed since last edit', gNote = mem.ghost ? gText : false;
+      var pad = 6, gapY = 22, x = pad, y = ((o.title || mem.ghost) ? 30 : 6) + titleExtra(o.title, W, 2, gText), rowH = 0, rows = [[]];
       units.forEach(function (u) {
         if (x + u.w > W - pad && x > pad) { y += rowH + gapY; x = pad; rowH = 0; rows.push([]); }
         u.x = x; u.y = y; x += u.w + 4; rowH = Math.max(rowH, u.h);
@@ -920,20 +973,20 @@ var kit = (function () {
       var H = y + rowH + 8;
       var title = str(o.title);
       var svg = makeSvg(el, W, H, (title || 'Pipeline') + ': ' + units.map(function (u) { return (u.op ? u.op + ' → ' : '') + str(u.s.title); }).join(' '));
-      titleRow(svg, title, 2, W, false);
+      titleRow(svg, title, 2, W, gNote, gText);
       var anyHi = false;
       units.forEach(function (u) {
         var sx = u.x + u.aw;
         var hi = !!u.s.highlight || isWatched(u.s.title);
         if (hi) anyHi = true;
         if (u.aw) {
-          var ay = u.y + 22 + Math.min(u.bh, 60) / 2;
+          var ay = u.y + HH + Math.min(u.bh, 60) / 2;
           svgEl('line', { x1: u.x + 4, x2: u.x + u.aw - 10, y1: ay, y2: ay, 'class': 'k-arrow' }, svg);
           svgEl('path', { d: 'M' + r2(u.x + u.aw - 4) + ',' + r2(ay) + 'l-8,-5v10z', 'class': 'k-arrowhead' }, svg);
           if (u.op) txt(svg, u.x + u.aw / 2 - 3, ay - 8, u.op, 'k-op', { 'text-anchor': 'middle' });
         }
-        txt(svg, sx, u.y + 14, trunc(u.s.title || ('stage ' + (u.i + 1)), u.sw / 7.4), 'k-stage-title' + (hi ? ' k-accent' : ''));
-        var by = u.y + 22;
+        u.tl.forEach(function (l, k) { txt(svg, sx, u.y + 14 + k * 14, l, 'k-stage-title' + (hi ? ' k-accent' : '')); });
+        var by = u.y + HH;
         var bx = sx + (u.sw - u.bw) / 2;
         if (u.kind === 'matrix' || u.kind === 'vector') {
           var prev = mem.prev ? mem.prev[u.i] : undefined, base = mem.ghost ? mem.ghost[u.i] : undefined;
@@ -955,7 +1008,6 @@ var kit = (function () {
         if (hi) svgEl('rect', { x: bx - 4, y: by - 4, width: u.bw + 8, height: u.bh + 8, rx: 6, 'class': 'k-focus-ring' }, svg);
         u.cap.forEach(function (l, k) { txt(svg, sx, by + u.bh + 17 + k * 15, l, 'k-caption'); });
       });
-      if (mem.ghost) txt(svg, W - 6, 17, '▲▼ = changed since last edit', 'k-muted', { 'text-anchor': 'end' });
       if (anyHi) svg.classList.add('kit-has-focus');
       if (o.note) note(el, o.note);
       return svg;
@@ -1100,8 +1152,8 @@ var kit = (function () {
       var gw = C * cs, gh = R * cs;
       var legendItems = continuous ? [] : distinct.map(function (v) { return v; });
       var legendRows = continuous ? 1 : Math.ceil(legendItems.length / Math.max(1, Math.floor((Math.max(gw, 240)) / 150)));
-      var top = title ? 26 : 4;
-      var w = Math.max(gw + 4, Math.min(W, Math.max(260, tw(title, 13.5) + 12)));
+      var w = Math.max(gw + 4, Math.min(W, Math.max(260, Math.min(tw(title, 13.5) + 12, Math.max(gw + 4, 340)))));
+      var top = (title ? 26 : 4) + titleExtra(title, w, 2, false);
       var H = top + gh + 10 + legendRows * 18 + 4;
       var svg = makeSvg(el, w, H, (title || 'Grid') + ' (' + R + '×' + C + ')', true);
       titleRow(svg, title, 2, w, false);
@@ -1153,9 +1205,10 @@ var kit = (function () {
       if (!nodes.length) return emptyState(el, o.title, 'No nodes to show yet.', W);
       var edges = arr(o.edges).filter(function (e) { return e && e.from !== undefined && e.to !== undefined; });
       var title = str(o.title);
-      var H = Math.round(clamp(W * 0.6, 240, 440));
+      var tEx = titleExtra(title, W, 2, false);
+      var H = Math.round(clamp(W * 0.6, 240, 440)) + tEx;
       var rad = clamp(Math.min(W, H) / 16, 14, 24);
-      var top = title ? 26 : 4;
+      var top = (title ? 26 : 4) + tEx;
       var pad = rad + 26;
       var byId = {};
       nodes.forEach(function (n, i) {
@@ -1214,8 +1267,7 @@ var kit = (function () {
         svgEl('circle', { cx: p.x, cy: p.y, r: rad, 'class': 'k-node-ring' }, g);
         var label = str(n.label !== undefined ? n.label : n.id);
         var inside = tw(label) <= rad * 1.8;
-        var strong = isNum(v) && vmax > 0 && Math.abs(v) / vmax > 0.6;
-        if (inside) txt(g, p.x, p.y + 4, label, 'k-node-label' + (strong ? ' k-on' : ''), { 'text-anchor': 'middle' });
+        if (inside) txt(g, p.x, p.y + 4, label, 'k-node-label' + (isNum(v) && vmax > 0 ? onCls(0.08 + 0.8 * Math.abs(v) / vmax) : ''), { 'text-anchor': 'middle' });
         var below = (inside ? '' : trunc(label, 18)) + (isNum(v) ? (inside ? '' : ' ') + '= ' + fmt(v, isNum(num(o.fmt)) ? num(o.fmt) : 2) : '');
         if (below) txt(g, p.x, p.y + rad + 15, below, 'k-node-sub k-halo' + (hi ? ' k-accent' : ''), { 'text-anchor': 'middle' });
         svgEl('title', { text: label + (isNum(v) ? ' = ' + fmt(v, 4) : '') }, g);
@@ -1273,7 +1325,7 @@ var kit = (function () {
       }
       if (!isNum(R.lo) || !isNum(R.hi) || R.lo >= R.hi) R = { lo: -1, hi: 1 };
       var S = Math.round(Math.min(Wf, 480));
-      var top = title ? 26 : 6, pad = 30;
+      var top = (title ? 26 : 6) + titleExtra(title, S, 2, true), pad = 30;
       var side = S - pad - 10;
       var W = S, H = top + side + 26 + (handles.length ? 18 : 0);
       var dom = axisDomain([R.lo, R.hi], R.lo, R.hi, false, Math.max(2, Math.round(side / 60)));
@@ -1281,7 +1333,7 @@ var kit = (function () {
       var mem = remember(slot('vec2d', title), vectors.map(function (v) { return [str(v.label), num(v.x), num(v.y), arr(v.from).map(num)]; }));
       var svg = makeSvg(el, W, H, (title || 'Vector plot') + ': ' + vectors.map(function (v) { return str(v.label) + ' (' + fmt(num(v.x), 2) + ', ' + fmt(num(v.y), 2) + ')'; }).join('; '), true);
       svg.style.touchAction = 'none';
-      titleRow(svg, title, 2, W, !!mem.ghost);
+      titleRow(svg, title, 2, W, !!mem.ghost, true);
       dom.ticks.forEach(function (t) {
         svgEl('line', { x1: X(t), x2: X(t), y1: top, y2: top + side, 'class': 'k-grid' }, svg);
         svgEl('line', { x1: pad, x2: pad + side, y1: Y(t), y2: Y(t), 'class': 'k-grid' }, svg);
@@ -1361,6 +1413,296 @@ var kit = (function () {
     });
   }
 
+  /* -------------------------------------------------------------------- flow */
+  /* Cause -> effect / block diagram. Boxes carry live values; arrows carry polarity
+     (+ blue "more causes more", − purple "more causes less", shown by colour AND a
+     +/− badge) and thickness by |weight|. x,y in 0..1; missing positions get a
+     left-to-right layered layout from the edges. */
+  function polarity(e) {
+    var s = e.sign;
+    if (typeof s === 'number') return s > 0 ? 1 : (s < 0 ? -1 : 0);
+    s = str(s).trim().toLowerCase();
+    if (s === '+' || s === 'pos' || s === 'positive' || s === '+1' || s === 'up') return 1;
+    if (s === '-' || s === '−' || s === 'neg' || s === 'negative' || s === '-1' || s === 'down') return -1;
+    var w = num(e.weight);
+    return isNum(w) && w < 0 ? -1 : 0;
+  }
+  function layered(nodes, edges) {
+    var n = nodes.length, idx = {}, out = [], indeg = [], depth = [];
+    nodes.forEach(function (nd, i) { idx[str(nd.id)] = i; out.push([]); indeg.push(0); depth.push(-1); });
+    edges.forEach(function (e) {
+      var a = idx[str(e.from)], b = idx[str(e.to)];
+      if (a === undefined || b === undefined || a === b) return;
+      out[a].push(b); indeg[b] += 1;
+    });
+    var order = [];
+    for (var i = 0; i < n; i++) if (indeg[i] === 0) order.push(i);
+    for (var j = 0; j < n; j++) order.push(j);
+    order.forEach(function (s) {
+      if (depth[s] >= 0) return;
+      depth[s] = 0;
+      var q = [s];
+      while (q.length) {
+        var u = q.shift();
+        out[u].forEach(function (v) { if (depth[v] < 0) { depth[v] = depth[u] + 1; q.push(v); } });
+      }
+    });
+    var maxD = 0; depth.forEach(function (d) { maxD = Math.max(maxD, d); });
+    var pos = [];
+    if (maxD === 0) {
+      var cols = Math.min(n, 4), rows = Math.ceil(n / cols);
+      nodes.forEach(function (nd, k) {
+        pos.push([cols > 1 ? (k % cols) / (cols - 1) : 0.5, rows > 1 ? Math.floor(k / cols) / (rows - 1) : 0.5]);
+      });
+      return { pos: pos, rows: rows };
+    }
+    var layers = {}, maxRows = 1;
+    depth.forEach(function (d, k) { (layers[d] = layers[d] || []).push(k); });
+    Object.keys(layers).forEach(function (d) { maxRows = Math.max(maxRows, layers[d].length); });
+    depth.forEach(function (d, k) {
+      var L = layers[d], r = L.indexOf(k);
+      pos[k] = [d / maxD, L.length > 1 ? r / (L.length - 1) : 0.5];
+    });
+    return { pos: pos, rows: maxRows };
+  }
+  function rectExit(cx, cy, hw, hh, tx, ty) {
+    var dx = tx - cx, dy = ty - cy;
+    if (!dx && !dy) return [cx, cy];
+    var t = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+    return [cx + dx * t, cy + dy * t];
+  }
+  function flow(el, o) {
+    return safe('flow diagram', el, o, function (el, o) {
+      var W = widthOf(el);
+      var seen = {}, nodes = [];
+      arr(o.nodes).forEach(function (nd) {
+        if (!nd || typeof nd !== 'object' || nd.id === undefined || nd.id === null || str(nd.id) === '') return;
+        if (seen[str(nd.id)]) return;
+        seen[str(nd.id)] = 1; nodes.push(nd);
+      });
+      if (!nodes.length) return emptyState(el, o.title, 'No boxes to show yet.', W);
+      var edges = arr(o.edges).filter(function (e) { return e && typeof e === 'object' && seen[str(e.from)] && seen[str(e.to)]; });
+      var title = str(o.title);
+      var d = isNum(num(o.fmt)) ? clamp(Math.round(num(o.fmt)), 0, 8) : 2;
+      var valStr = function (nd) {
+        var v = nd.value;
+        if (v === undefined || v === null || v === '') return '';
+        var u = nd.unit ? ' ' + str(nd.unit) : '';
+        return (typeof v === 'number' ? fmt(v, d) : (isNum(num(v)) && /^\s*-?[\d.]+(e-?\d+)?\s*$/i.test(str(v)) ? fmt(num(v), d) : trunc(str(v), 18))) + u;
+      };
+      var mem = remember(slot('flow', title), { v: nodes.map(function (nd) { return isNum(num(nd.value)) ? num(nd.value) : null; }), w: edges.map(function (e) { return isNum(num(e.weight)) ? num(e.weight) : null; }) });
+      var gv = mem.ghost ? arr(mem.ghost.v) : [], pw = mem.prev ? arr(mem.prev.w) : [];
+
+      // positions (0..1); tolerate pixel-ish or percentage inputs by normalising
+      var xs = nodes.map(function (nd) { return num(nd.x); }), ys = nodes.map(function (nd) { return num(nd.y); });
+      var given = xs.every(isNum) && ys.every(isNum);
+      var auto = given ? null : layered(nodes, edges);
+      var norm01 = function (a) {
+        var mx = Math.max.apply(null, a.filter(isNum).concat([0])), mn = Math.min.apply(null, a.filter(isNum).concat([0]));
+        if (mx <= 1.0001 && mn >= -0.0001) return a;
+        var span = (mx - mn) || 1;
+        return a.map(function (v) { return isNum(v) ? (v - mn) / span : v; });
+      };
+      xs = norm01(xs); ys = norm01(ys);
+      var P = nodes.map(function (nd, i) {
+        if (given) return [clamp(xs[i], 0, 1), clamp(ys[i], 0, 1)];
+        return auto.pos[i];
+      });
+      var distinct = function (k) { var m = {}; P.forEach(function (p) { m[Math.round(p[k] * 20)] = 1; }); return Math.max(1, Object.keys(m).length); };
+      var nCols = distinct(0), nRows = distinct(1);
+      if (W < 560 && nCols > nRows) {
+        // narrow screen: turn a left-to-right diagram into a top-to-bottom one
+        P = P.map(function (p) { return [p[1], p[0]]; });
+        var tmpN = nCols; nCols = nRows; nRows = tmpN;
+      }
+
+      // box sizes
+      var maxBoxW = clamp(Math.floor((W - 12) / nCols - 22), 64, 200);
+      var anyVal = nodes.some(function (nd) { return valStr(nd) !== ''; });
+      var labelOf = function (nd) { return str(nd.label !== undefined && nd.label !== null ? nd.label : nd.id); };
+      var longWord = 0;
+      nodes.forEach(function (nd) { labelOf(nd).split(/\s+/).forEach(function (w) { longWord = Math.max(longWord, w.length); }); });
+      var lineChars = Math.max((maxBoxW - 16) / 7, Math.min(longWord, ((W - 12) / nCols - 10) / 7));
+      maxBoxW = Math.max(maxBoxW, Math.min(lineChars * 7 + 16, (W - 12) / nCols - 6));
+      var boxes = nodes.map(function (nd) {
+        var label = labelOf(nd);
+        var lines = wrapWords(label, lineChars, 3);
+        var vs = valStr(nd);
+        var bw = 0;
+        lines.forEach(function (l) { bw = Math.max(bw, tw(l, 12.5)); });
+        bw = clamp(Math.max(bw, tw(vs, 15) + 14) + 22, 60, maxBoxW);
+        var bh = 12 + lines.length * 15 + (anyVal ? 22 : 0);
+        return { nd: nd, label: label, lines: lines, vs: vs, bw: bw, bh: bh };
+      });
+      var mbw = 0, mbh = 0;
+      boxes.forEach(function (b) { mbw = Math.max(mbw, b.bw); mbh = Math.max(mbh, b.bh); });
+      var signed = edges.some(function (e) { return polarity(e) !== 0; });
+      var weighted = edges.some(function (e) { return isNum(num(e.weight)); });
+      var legendH = signed || weighted ? 24 : 0;
+      var tEx = titleExtra(title, W, 2, false);
+      var top = (title ? 28 : 6) + tEx;
+      var rowsNeeded = Math.max(nRows, auto && W >= 560 ? auto.rows : 1);
+      var H = Math.round(Math.max(clamp(W * 0.5, 220, 400), rowsNeeded * (mbh + 34) + 20)) + tEx + legendH;
+      var padX = mbw / 2 + 8, padY = mbh / 2 + 10;
+      var areaB = H - legendH - 4;
+      boxes.forEach(function (b, i) {
+        b.cx = padX + P[i][0] * Math.max(0, W - 2 * padX);
+        b.cy = top + padY + P[i][1] * Math.max(0, areaB - top - 2 * padY);
+      });
+      var byId = {};
+      boxes.forEach(function (b) { byId[str(b.nd.id)] = b; });
+      var svg = makeSvg(el, W, H, (title || 'Flow diagram') + ': ' + edges.map(function (e) {
+        var pz = polarity(e);
+        return str(e.from) + (pz > 0 ? ' increases ' : pz < 0 ? ' decreases ' : ' → ') + str(e.to);
+      }).join('; '));
+      titleRow(svg, title, 2, W, false);
+
+      var maxW = 0;
+      edges.forEach(function (e) { var w = Math.abs(num(e.weight)); if (isNum(w)) maxW = Math.max(maxW, w); });
+      var pairs = {};
+      edges.forEach(function (e) { pairs[str(e.from) + '>' + str(e.to)] = true; });
+      var eg = svgEl('g', null, svg), lg = svgEl('g', null, svg);
+      var anyHi = false;
+      edges.forEach(function (e, k) {
+        var a = byId[str(e.from)], b = byId[str(e.to)];
+        var pz = polarity(e);
+        var hi = !!e.highlight || isWatched(e.label);
+        if (hi) anyHi = true;
+        var col = hi ? 'var(--accent)' : (pz > 0 ? 'var(--pos)' : pz < 0 ? 'var(--neg)' : 'var(--axis)');
+        var w = Math.abs(num(e.weight));
+        var widthFor = function (ww) { return isNum(ww) && maxW > 0 ? 1.4 + 4.6 * Math.abs(ww) / maxW : 2; };
+        var sw = widthFor(w), sw0 = widthFor(pw[k]);
+        var off = isNum(w) && w === 0;
+        var path, hx, hy, fx, fy, mx, my, bx, by;
+        if (a === b) {
+          var cx = a.cx, cy = a.cy - a.bh / 2;
+          path = 'M' + r2(cx - 14) + ',' + r2(cy) + 'C' + r2(cx - 30) + ',' + r2(cy - 40) + ' ' + r2(cx + 30) + ',' + r2(cy - 40) + ' ' + r2(cx + 14) + ',' + r2(cy - 2);
+          fx = cx + 22; fy = cy - 22; hx = cx + 14; hy = cy - 2; mx = cx; my = cy - 34; bx = cx + 26; by = cy - 26;
+        } else {
+          var bend = pairs[str(e.to) + '>' + str(e.from)] ? 26 : 0;
+          var dx = b.cx - a.cx, dy = b.cy - a.cy, L = Math.sqrt(dx * dx + dy * dy) || 1;
+          var nx = -dy / L, ny = dx / L;
+          var qx = (a.cx + b.cx) / 2 + nx * bend, qy = (a.cy + b.cy) / 2 + ny * bend;
+          var s = rectExit(a.cx, a.cy, a.bw / 2 + 3, a.bh / 2 + 3, qx, qy);
+          var t = rectExit(b.cx, b.cy, b.bw / 2 + 4, b.bh / 2 + 4, qx, qy);
+          path = 'M' + r2(s[0]) + ',' + r2(s[1]) + 'Q' + r2(qx) + ',' + r2(qy) + ' ' + r2(t[0]) + ',' + r2(t[1]);
+          fx = qx; fy = qy; hx = t[0]; hy = t[1];
+          // midpoint of the quadratic curve, and a point 72% along it for the polarity badge
+          var qp = function (u) { return [(1 - u) * (1 - u) * s[0] + 2 * (1 - u) * u * qx + u * u * t[0], (1 - u) * (1 - u) * s[1] + 2 * (1 - u) * u * qy + u * u * t[1]]; };
+          var segL = Math.sqrt((t[0] - s[0]) * (t[0] - s[0]) + (t[1] - s[1]) * (t[1] - s[1]));
+          var m = qp(0.5), bpt = qp(segL < 70 ? 0.45 : 0.72);
+          mx = m[0] + nx * 13; my = m[1] + ny * 13; bx = bpt[0]; by = bpt[1];
+          if (segL < 60) mx = NaN; // too short for a readable label: keep it in the tooltip only
+        }
+        var pe = svgEl('path', { d: path, 'class': 'k-flow-edge' + (hi ? ' k-edge-hi' : ''), stroke: col, 'stroke-dasharray': off ? '4 4' : null, opacity: off ? 0.55 : 1 }, eg);
+        svgEl('title', { text: str(e.from) + (pz > 0 ? ' increases ' : pz < 0 ? ' decreases ' : ' → ') + str(e.to) + (isNum(num(e.weight)) ? ' (weight ' + fmt(num(e.weight), 3) + ')' : '') + (e.label ? ': ' + str(e.label) : '') }, pe);
+        tween(function (tt) { pe.setAttribute('stroke-width', s2(lerp(sw0, sw, tt))); });
+        var hs = 7 + Math.min(4, sw * 0.6);
+        var ddx = hx - fx, ddy = hy - fy, LL = Math.sqrt(ddx * ddx + ddy * ddy) || 1, ux = ddx / LL, uy = ddy / LL;
+        var abx = hx - ux * hs * 1.3, aby = hy - uy * hs * 1.3;
+        svgEl('path', { d: 'M' + r2(hx) + ',' + r2(hy) + 'L' + r2(abx - uy * hs * 0.6) + ',' + r2(aby + ux * hs * 0.6) + 'L' + r2(abx + uy * hs * 0.6) + ',' + r2(aby - ux * hs * 0.6) + 'Z', fill: col, opacity: off ? 0.55 : 1 }, eg);
+        if (pz !== 0) {
+          svgEl('circle', { cx: bx, cy: by, r: 8.5, 'class': 'k-pol', stroke: col }, lg);
+          txt(lg, bx, by + 4.5, pz > 0 ? '+' : '−', 'k-pol-sign', { 'text-anchor': 'middle', fill: col });
+        }
+        var lab = e.label !== undefined && e.label !== null && str(e.label) !== '' ? str(e.label) : '';
+        if (lab && isNum(mx)) txt(lg, mx, my + 4, trunc(lab, 22), 'k-edge-label k-halo' + (hi ? ' k-accent' : ''), { 'text-anchor': 'middle' });
+      });
+      boxes.forEach(function (b, i) {
+        var nd = b.nd;
+        var hi = !!nd.highlight || isWatched(nd.label) || isWatched(nd.id);
+        if (hi) anyHi = true;
+        var g = svgEl('g', { 'class': 'k-flow-node' + (hi ? ' k-flow-hi' : '') }, svg);
+        var x0 = b.cx - b.bw / 2, y0 = b.cy - b.bh / 2;
+        svgEl('rect', { x: x0, y: y0, width: b.bw, height: b.bh, rx: 9, 'class': 'k-flow-box' }, g);
+        b.lines.forEach(function (l, k) { txt(g, b.cx, y0 + 18 + k * 15, l, 'k-flow-label', { 'text-anchor': 'middle' }); });
+        if (b.vs) {
+          var vy = y0 + 18 + b.lines.length * 15 + 5;
+          txt(g, b.cx, vy, b.vs, 'k-flow-val' + (hi ? ' k-accent' : ''), { 'text-anchor': 'middle' });
+          var v = num(nd.value), g0 = gv[i];
+          if (isNum(v) && isNum(g0) && Math.abs(v - g0) > 1e-12 * Math.max(1, Math.abs(v))) {
+            txt(g, b.cx + tw(b.vs, 15) / 2 + 5, vy - 1, v > g0 ? '▲' : '▼', 'k-flow-delta');
+          }
+        }
+        svgEl('title', { text: b.label + (b.vs ? ' = ' + b.vs : '') }, g);
+      });
+      if (legendH) {
+        var lx = 4, ly = H - 8;
+        var item = function (colr, sign, text) {
+          svgEl('line', { x1: lx, x2: lx + 30, y1: ly - 4, y2: ly - 4, stroke: colr, 'class': 'k-flow-edge', 'stroke-width': 2.5 }, svg);
+          svgEl('circle', { cx: lx + 15, cy: ly - 4, r: 7.5, 'class': 'k-pol', stroke: colr }, svg);
+          txt(svg, lx + 15, ly, sign, 'k-pol-sign k-small', { 'text-anchor': 'middle', fill: colr });
+          txt(svg, lx + 36, ly, text, 'k-legend');
+          lx += 36 + tw(text) + 18;
+        };
+        if (signed) {
+          item('var(--pos)', '+', 'more causes more');
+          item('var(--neg)', '−', 'more causes less');
+        }
+        if (weighted && lx + tw('thicker = stronger') < W) txt(svg, lx, ly, 'thicker = stronger', 'k-muted');
+      }
+      if (anyHi) svg.classList.add('kit-has-focus');
+      if (isWatched(title)) svg.classList.add('kit-watched');
+      if (o.note) note(el, o.note);
+      return svg;
+    });
+  }
+
+  /* ----------------------------------------------------------------- compare */
+  /* Side-by-side "without vs with" / "before vs after" panes (stacked on narrow
+     screens). Each side's draw(sub) fills its pane with other kit calls. */
+  function div(cls, text) {
+    var d = document.createElement('div');
+    d.setAttribute('class', cls);
+    if (text !== undefined) d.textContent = str(text);
+    return d;
+  }
+  function compare(el, o) {
+    o = (o && typeof o === 'object') ? o : {};
+    try {
+      var title = str(o.title);
+      var wrap = div('kit-compare');
+      wrap.setAttribute('role', 'group');
+      wrap.setAttribute('aria-label', title || 'Side-by-side comparison');
+      if (title) wrap.appendChild(div('kit-cmp-title', title));
+      var grid2 = div('kit-cmp-grid');
+      wrap.appendChild(grid2);
+      attach(el, wrap);
+      // build both panes before drawing either, so each measures its final width
+      var todo = [];
+      ['left', 'right'].forEach(function (side, i) {
+        var spec = (o[side] && typeof o[side] === 'object') ? o[side] : (typeof o[side] === 'function' ? { draw: o[side] } : {});
+        var pane = div('kit-cmp-pane kit-cmp-' + side);
+        var head = div('kit-cmp-head');
+        var tag = document.createElement('span');
+        tag.setAttribute('class', 'kit-cmp-tag');
+        tag.setAttribute('aria-hidden', 'true');
+        tag.textContent = i ? 'B' : 'A';
+        var name = document.createElement('span');
+        name.textContent = str(spec.title) || (i ? 'After' : 'Before');
+        head.append(tag, name);
+        var body = div('kit-cmp-body');
+        pane.append(head, body);
+        grid2.appendChild(pane);
+        if (spec.highlight || isWatched(spec.title)) pane.classList.add('kit-cmp-hi');
+        todo.push([side, spec, body]);
+      });
+      todo.forEach(function (t) {
+        var spec = t[1], body = t[2];
+        if (typeof spec.draw !== 'function') { emptyState(body, '', 'Nothing to draw on this side.'); return; }
+        try { spec.draw(body); } catch (e) {
+          warn('compare ' + t[0] + ' draw failed', e);
+          emptyState(body, '', 'Could not draw this side: ' + errMsg(e));
+        }
+      });
+      if (o.note) note(wrap, o.note);
+      return wrap;
+    } catch (e) {
+      warn('compare failed', e);
+      try { return emptyState(el, o.title, 'Could not build the comparison: ' + errMsg(e)); } catch (e2) { return null; }
+    }
+  }
+
   /* ---------------------------------------------------------- misc helpers */
   function callout(el, text, kind) {
     try {
@@ -1406,7 +1748,7 @@ var kit = (function () {
 
   return {
     plot: plot, bars: bars, matrix: matrix, pipeline: pipeline, timeline: timeline, grid: grid,
-    graph: graph, vec2d: vec2d, callout: callout, svg: svgRoot, svgEl: svgEl, set: set, fmt: fmt,
+    graph: graph, vec2d: vec2d, flow: flow, compare: compare, callout: callout, svg: svgRoot, svgEl: svgEl, set: set, fmt: fmt,
     color: color, accent: 'var(--accent)', rng: rng,
     isWatched: isWatched,
     /* internal hooks used by app.js (not part of the generated-code API) */

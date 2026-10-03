@@ -175,10 +175,12 @@ def check_s1(spec) -> dict:
             probs.append(f"explorations[{i}] missing {', '.join(miss)}")
     if not (spec.get("limitation") or {}).get("text"):
         probs.append("limitation.text missing")
+    # Counts of tests/invariants are enforced by C1/C3 (not acceptance-critical): the brief does not
+    # require them, and unverifiable ones may be pruned from the final page.
     if len(spec.get("invariants", [])) < 1:
-        probs.append("need >=1 invariant")
+        warns.append("no invariants")
     if len(spec.get("tests", [])) < 2:
-        probs.append(f"need >=2 tests (have {len(spec.get('tests', []))})")
+        warns.append(f"{len(spec.get('tests', []))} tests")
     if not spec.get("intermediates"):
         probs.append("need >=1 intermediate")
     for k in ("why", "symbols", "equations", "claims"):
@@ -444,12 +446,15 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
         # A control may legitimately matter only under another select/toggle setting
         # (e.g. custom probabilities when shape = "custom"), so also try those contexts.
         contexts = [dict(defaults)]
-        for o in spec["controls"]:
-            if o["type"] in ("select", "toggle"):
-                for v in _alt_values(o):
-                    ctx = dict(defaults)
-                    ctx[o["id"]] = v
-                    contexts.append(ctx)
+        # select/toggle settings first, then other controls' alternative values (e.g. a "uniform"
+        # toggle only matters once the probabilities are no longer uniform)
+        ordered = sorted(spec["controls"], key=lambda o: o["type"] not in ("select", "toggle"))
+        for o in ordered:
+            for v in _alt_values(o)[:3]:
+                ctx = dict(defaults)
+                ctx[o["id"]] = v
+                contexts.append(ctx)
+        contexts = contexts[:40]
         dead, conditional = [], []
         for c in spec["controls"]:
             changed_at = None
@@ -510,6 +515,8 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
         elif unknown:
             probs.append(f"'{name}': params {unknown} are not control ids")
     nt = len(spec.get("tests", []))
+    if 0 < nt < 2 and not probs:
+        probs.append(f"only {nt} test (need >=2)")
     results["C1"] = _res("C1", "fail" if probs or nt == 0 else "pass",
                          "; ".join(probs[:4]) or (f"{nt} tests pass" if nt else "no tests"))
 
@@ -575,6 +582,31 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
                          f"{js.timeouts} evaluation(s) hit the {EVAL_TIME_LIMIT_S}s limit" if js.timeouts
                          else f"all JS evaluations under {EVAL_TIME_LIMIT_S}s")
     return [results[k] for k in ORDER]
+
+
+def unverified_expectations(spec, compute_js) -> tuple:
+    """Model-written tests/invariants that are false for the final compute(): returns
+    (failing test names, failing invariant labels). Used to drop unverifiable claims from the
+    page after repairs are exhausted; the trace keeps the record."""
+    if quickjs is None or not isinstance(spec, dict) or not compute_js:
+        return [], []
+
+    def holds(p, expr):
+        ctx = quickjs.Context()
+        ctx.set_time_limit(EVAL_TIME_LIMIT_S)
+        ctx.set_memory_limit(MEMORY_LIMIT)
+        try:
+            ctx.eval(compute_js)
+            return bool(ctx.eval(f"(function(){{var p={json.dumps(p)};var r=compute(p);return !!({expr});}})()"))
+        except Exception:  # noqa: BLE001 - any JS error means "does not hold"
+            return False
+
+    bad_t = [t.get("name", "") for t in spec.get("tests", [])
+             if not holds(merged_params(spec, t.get("params")), t.get("expr", "false"))]
+    settings = [default_params(spec)] + [merged_params(spec, e.get("preset")) for e in spec.get("explorations", [])]
+    bad_i = [i.get("label", "") for i in spec.get("invariants", [])
+             if not all(holds(p, i.get("expr", "false")) for p in settings)]
+    return bad_t, bad_i
 
 
 def accepted(results) -> bool:

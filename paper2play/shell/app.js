@@ -424,23 +424,41 @@
     }
     return cur;
   }
-  function fillTemplate(tpl, r) {
-    return str(tpl).replace(/\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+|\[\d+\])*)\s*(?::\s*(\d+))?\s*\}/g, function (m, key, d) {
+  /* Splits a live template into text / value / missing parts. An unresolved {key}
+     renders as a quiet "—" (never "?"), so a template slip does not look like an error. */
+  var TPL_RE = /\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+|\[\d+\])*)\s*(?::\s*(\d+))?\s*\}/g;
+  function fillParts(tpl, r) {
+    var parts = [], last = 0, src = str(tpl), m;
+    TPL_RE.lastIndex = 0;
+    while ((m = TPL_RE.exec(src)) !== null) {
+      if (m.index > last) parts.push({ k: 'txt', t: src.slice(last, m.index) });
+      last = TPL_RE.lastIndex;
+      var key = m[1], d = m[2];
       var v = r ? getPath(r, key) : undefined;
       if (v === undefined) v = getPath(p, key);
-      if (v === undefined) return '?';
       var base = key.split(/[.[]/)[0];
+      if (v === undefined || (typeof v === 'number' && isNaN(v)) || typeof v === 'function') { parts.push({ k: 'miss', t: '—', key: base }); continue; }
       var it = inter.filter(function (x) { return x.key === base; })[0];
       var digits = d !== undefined ? parseInt(d, 10) : (it ? it.d : (byId[base] && isNum(byId[base].step) ? decimalsOf(byId[base].step) : 3));
-      if (byId[base] && v === p[base] && typeof v !== 'number') return fmtVal(byId[base], v);
-      return fmt(v, digits);
-    });
+      var t = (byId[base] && v === p[base] && typeof v !== 'number') ? fmtVal(byId[base], v) : fmt(v, digits);
+      parts.push({ k: 'val', t: t, key: base });
+    }
+    if (last < src.length) parts.push({ k: 'txt', t: src.slice(last) });
+    return parts;
   }
   var liveEqs = [];
   function updateEquations(r) {
     liveEqs.forEach(function (le) {
-      var s = fillTemplate(le.tpl, r);
-      if (s !== le.prev) { le.el.textContent = s; if (le.prev !== undefined) flash(le.el); le.prev = s; }
+      var parts = fillParts(le.tpl, r);
+      var s = parts.map(function (q) { return q.t; }).join('') + '|' + watchKey;
+      if (s === le.prev) return;
+      le.el.replaceChildren.apply(le.el, parts.map(function (q) {
+        if (q.k === 'txt') return document.createTextNode(q.t);
+        if (q.k === 'miss') return h('span', { 'class': 'lv-miss', title: 'not available for these settings', 'aria-label': 'not available', text: '—' });
+        return h('span', { 'class': 'lv' + (watchKey && q.key === watchKey ? ' lv-watch' : ''), text: q.t });
+      }));
+      if (le.prev !== undefined) flash(le.el);
+      le.prev = s;
     });
   }
 
@@ -579,7 +597,7 @@
     var establish = h('div', { 'class': 'establish' }, [
       vis.caption ? h('p', { 'class': 'caption', text: vis.caption }) : null,
       vis.how_to_read ? h('p', { 'class': 'howto' }, [h('b', { text: 'How to read it: ' }), vis.how_to_read]) : null,
-      h('p', { 'class': 'howto', text: 'Dashed grey shapes show the state before your last change, so you can see what moved.' }),
+      h('p', { 'class': 'howto meta', text: 'Dashed grey shapes and ▲▼ marks show the state before your last change, so you can see what moved.' }),
       els.chip
     ]);
     els.vizCard = h('div', { 'class': 'card viz-card', id: 'visual', tabindex: '-1' }, [establish, els.err, els.viz]);
@@ -638,13 +656,13 @@
       });
       var card = h('article', { 'class': 'card ex', id: 'explore-' + (i + 1), 'aria-labelledby': 'ex-h-' + i });
       var tryBtn = h('button', { type: 'button', 'class': 'btn btn-primary', text: '▶ Try it' });
-      tryBtn.addEventListener('click', function () { tryIt(ex, preset, card, status); });
+      tryBtn.addEventListener('click', function () { tryIt(ex, preset, card, status, tryBtn); });
       var desc = describePreset(preset);
       add(card, 
         h('div', { 'class': 'ex-num', text: 'Exploration ' + (i + 1) }),
         h('h3', { id: 'ex-h-' + i, text: str(ex.title) || 'What happens if…' }),
         h('p', { 'class': 'predict' }, [h('b', { text: 'Predict first' }), str(ex.predict)]),
-        h('label', { 'class': 'guess' }, ['Your prediction (optional, stays on this page)', h('input', { type: 'text', autocomplete: 'off' })]),
+        h('label', { 'class': 'guess' }, ['Your prediction (optional, stays on this page)', h('input', { type: 'text', autocomplete: 'off', id: 'guess-' + (i + 1), name: 'guess-' + (i + 1) })]),
         desc || ex.watch ? h('p', { 'class': 'preset' }, [
           desc ? 'Try it sets ' : null, desc ? h('code', { text: desc }) : null,
           desc ? ' (other controls return to their defaults).' : null,
@@ -658,8 +676,18 @@
     });
     return section('explore', 'Explore', [grid]);
   }
-  function tryIt(ex, preset, card, status) {
+  function tryIt(ex, preset, card, status, btn) {
+    var before = clone(p);
     controls.forEach(function (c) { setControl(c.id, has(preset, c.id) ? clone(preset[c.id]) : clone(c.default)); });
+    controls.forEach(function (c) {
+      if (JSON.stringify(before[c.id]) !== JSON.stringify(p[c.id]) && widgets[c.id]) flash(widgets[c.id].el);
+    });
+    if (btn) {
+      btn.textContent = '✓ Applied';
+      btn.classList.add('done');
+      clearTimeout(btn._t);
+      btn._t = setTimeout(function () { btn.textContent = '▶ Try it again'; btn.classList.remove('done'); }, 1800);
+    }
     Object.keys(preset).forEach(function (k) { if (!byId[k]) setControl(k, clone(preset[k])); });
     setWatch(ex.watch ? str(ex.watch) : null);
     exCards.forEach(function (cd) { cd.classList.toggle('active', cd === card); });

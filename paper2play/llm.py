@@ -203,8 +203,8 @@ class OpenRouterClient:
                 else:
                     self.budget.record_usage(None, None, max_tokens)
                 last_err = f.message
-                rejected_reasoning = (self.send_reasoning and f.status in (400, 422)
-                                      and "reason" in f.message.lower())
+                # Some providers reject the `reasoning` field with a generic 400; retry once without it.
+                rejected_reasoning = self.send_reasoning and f.status in (400, 422)
                 self.trace.event(stage, "llm_call", "error", call=call_no, model=self.model,
                                  purpose=purpose, attempt=attempts, http_status=f.status,
                                  elapsed_s=round(elapsed, 2), max_tokens=max_tokens,
@@ -250,7 +250,8 @@ class OpenRouterClient:
                 if finish == "length":
                     # All tokens went to hidden reasoning. Retrying the same way won't help, so
                     # retry once with reasoning switched off (the rest of the run keeps it off).
-                    if self.send_reasoning and self.reasoning_override is None:
+                    if (self.send_reasoning and self.reasoning_override is None
+                            and reasoning_setting().get("enabled", True) is not False):
                         self.reasoning_override = {"enabled": False, "exclude": True}
                         self.trace.event(stage, "llm_call", "retry", purpose=purpose,
                                          detail="reasoning consumed the budget; retrying with reasoning disabled")

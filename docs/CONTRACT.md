@@ -90,6 +90,8 @@ where possible, readable font ≥ 12px, `prefers-reduced-motion` respected.
 | `kit.grid(el, o)` | `o = {title, cells:[[v,…]], palette?:{value:cssColor}, labels?:{value:text}, cellSize?}` |
 | `kit.graph(el, o)` | `o = {title, nodes:[{id,label,x,y,value?}], edges:[{from,to,weight?,label?}], highlight:[id]}` (x,y in 0..1) |
 | `kit.vec2d(el, o)` | `o = {title, range, vectors:[{x,y,label,from?:[x,y]}], handles:[{id, x, y}]}` dragging handle `id` calls `kit.set(id+'_x', v)` and `kit.set(id+'_y', v)` |
+| `kit.flow(el, o)` | `o = {title, nodes:[{id,label,value?,unit?,x?,y?,highlight?}], edges:[{from,to,sign?:'+'|'-',weight?,label?}]}` cause→effect / block diagram; auto layout when x,y omitted |
+| `kit.compare(el, o)` | `o = {title, left:{title, draw:(sub)=>{}}, right:{title, draw:(sub)=>{}}, note?}` side-by-side with/without; stacks on mobile |
 | `kit.callout(el, text, kind?)` | annotation box (`kind`: 'info'|'warn'|'key') |
 | `kit.svg(el, w, h)` | raw SVG root (viewBox 0 0 w h) for custom drawing; `kit.svgEl(tag, attrs, parent)` helper |
 | `kit.set(id, value)` | programmatically set a control (updates UI + reruns) |
