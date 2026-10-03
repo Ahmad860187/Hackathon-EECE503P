@@ -1,0 +1,17 @@
+Benchmark provenance: SciCode problem 38 "Reciprocal_lattice_vector", steps 38.1-38.3, Apache-2.0,
+https://huggingface.co/datasets/SciCode1/SciCode (dev split). Paraphrase of the scientist-written
+background.
+
+For real-space lattice vectors a1, a2, a3 of a crystal, the reciprocal lattice vectors are
+
+    b1 = 2 pi (a2 x a3) / (a1 . (a2 x a3)),
+    b2 = 2 pi (a3 x a1) / (a1 . (a2 x a3)),
+    b3 = 2 pi (a1 x a2) / (a1 . (a2 x a3)),
+
+where x is the cross product, computed component-wise as
+a x b = (a2 b3 - a3 b2, a3 b1 - a1 b3, a1 b2 - a2 b1). The denominator a1 . (a2 x a3) is the volume of
+the unit cell. For a one-dimensional lattice a1 = a x_hat, the reciprocal vector is b1 = (2 pi / a) x_hat.
+For a two-dimensional lattice, the third vector a3 is taken perpendicular to the plane (for example
+a1 x a2) and only b1 and b2 are kept. By construction a_i . b_j = 2 pi when i = j and 0 otherwise, so
+each reciprocal vector is perpendicular to the other two real-space vectors; reciprocal lengths scale
+as the inverse of real-space lengths.

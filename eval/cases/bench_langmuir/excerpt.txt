@@ -1,0 +1,18 @@
+Benchmark provenance: TheoremExplainBench theorem_233 "Langmuir Adsorption Isotherm" (chemistry / Physical
+Chemistry, Hard), MIT licence, https://huggingface.co/datasets/TIGER-Lab/TheoremExplainBench. The
+benchmark's description: a continuous monolayer of adsorbate molecules on a homogeneous solid surface is
+the conceptual basis for the model. Primary source: I. Langmuir, J. Am. Chem. Soc. 40 (1918) 1361-1403.
+Paraphrased; not checked against the paywalled original.
+
+Langmuir pictured a surface with a fixed number of equivalent adsorption sites, each holding at most
+one molecule, with no interaction between adsorbed molecules (a monolayer on a homogeneous surface).
+If theta is the fraction of occupied sites and P the gas pressure, molecules strike and stick to empty
+sites at a rate k_a P (1 - theta), and adsorbed molecules leave at a rate k_d theta. At equilibrium
+the two rates are equal, which gives
+
+    theta = K P / (1 + K P),   with K = k_a / k_d.
+
+At low pressure theta is approximately K P (proportional to pressure); at high pressure the surface
+saturates and theta approaches 1 (a complete monolayer). Coverage is one half when P = 1/K. Rearranged,
+P / theta = 1/K + P, so a plot of P/theta against P is a straight line, which is how the constants are
+fitted from data.

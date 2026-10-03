@@ -1,0 +1,20 @@
+Source: L. Michaelis and M. L. Menten, "Die Kinetik der Invertinwirkung", Biochemische Zeitschrift 49
+(1913) 333-369; English translation and commentary: K. A. Johnson and R. S. Goody, "The Original
+Michaelis Constant: Translation of the 1913 Michaelis-Menten Paper", Biochemistry 50 (2011) 8264-8269
+(https://pubs.acs.org/doi/10.1021/bi201284u; open copy at PMC3381512). Paraphrased excerpt, checked
+against the PMC copy on 2026-10-03.
+
+Michaelis and Menten studied the enzyme invertase hydrolysing sucrose. They postulated that the enzyme
+and sucrose rapidly form a compound in equilibrium, with a dissociation constant (the original
+"Michaelis constant", here written K_S), and that the rate of reaction is proportional to the
+concentration of this enzyme-sucrose compound. With total enzyme E0 and a rate constant c, the
+maximum rate is C = c * E0, and the initial rate follows
+
+    v = C * S / (S + K_S)
+
+(the paper's full expression also includes product-inhibition terms for fructose and glucose,
+v = C*S / (S + K_S (1 + F/K_F + G/K_G)), which the commentary notes is the modern form of competitive
+inhibition). At low S the rate is nearly proportional to S; at high S the enzyme is saturated and the
+rate approaches C. When S = K_S the rate is half its maximum. Michaelis and Menten measured progress
+curves by optical rotation and showed their fitted constant stayed consistent across sugar
+concentrations, supporting the postulated mechanism.

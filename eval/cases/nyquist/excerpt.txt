@@ -1,0 +1,16 @@
+Source: H. Nyquist, "Certain Topics in Telegraph Transmission Theory", Transactions of the AIEE 47
+(1928) 617-644 (reprinted Proc. IEEE 90(2), 2002). Paraphrased excerpt (public domain original; the
+reprint PDF was not reachable, so content was checked against secondary accounts on 2026-10-03).
+
+Nyquist analysed telegraph signalling, in which a message is sent as a sequence of pulse values
+("signal elements") at a fixed rate. He showed that the number of independent pulse values that can
+be put through a channel per unit time is limited to twice the bandwidth of the channel: with
+bandwidth B (in cycles per second), at most 2B independent values per second can be sent, and
+conversely 2B values per second are enough to determine a signal limited to that band. The interval
+1/(2B) later became known as the Nyquist interval. Nyquist did not state the sampling theorem in its
+modern form; the theorem that a signal containing no frequencies above B is completely determined by
+samples taken 1/(2B) apart is usually credited to Whittaker, Kotelnikov and Shannon (1949).
+
+Modern reading used in teaching: sampling a sinusoid of frequency f at rate fs produces samples that
+are identical to those of a sinusoid at |f - k fs| for any integer k. If fs > 2f the lowest such
+frequency is f itself; if fs < 2f, the samples look like a lower-frequency "alias".

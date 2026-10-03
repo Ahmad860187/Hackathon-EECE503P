@@ -1,0 +1,15 @@
+Benchmark provenance: SciCode problem 39 "Reflection_spectra_for_a_Distributed_Bragg_Reflector",
+steps 39.1-39.3, Apache-2.0, https://huggingface.co/datasets/SciCode1/SciCode (test split). Paraphrase
+of the scientist-written background (matrix method for plane-wave reflection from a DBR).
+
+A vertical-cavity laser designed for emission at lambda_b uses a mirror of N pairs of quarter-wave
+layers with refractive indices n1 (GaAs) and n2 (AlAs). For incident wavelength lambda the phase shift
+in each quarter-wave layer is phi = pi lambda_b / (2 lambda). The propagation matrix of one period is
+M = [[A, B], [C, D]] with
+    A = (n1 + n2)^2 / (4 n1 n2) e^{-2 i phi} - (n1 - n2)^2 / (4 n1 n2),
+    B = (n2^2 - n1^2) / (4 n1 n2) (1 - e^{2 i phi}),   C = conj(B),   D = conj(A).
+A pseudo-angle theta is defined by cos(theta) = (A + D) / 2. When |(A + D)/2| > 1 there is no real
+solution: theta = m pi + i alpha (m = 1 is assumed), which is the stop band of the mirror. The
+reflectance of N periods is
+    R = |C|^2 / ( |C|^2 + |sin(theta) / sin(N theta)|^2 ),
+or, inside the stop band, the same expression with sinh(alpha) / sinh(N alpha).

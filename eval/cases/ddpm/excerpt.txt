@@ -1,0 +1,16 @@
+Source: J. Ho, A. Jain, P. Abbeel, "Denoising Diffusion Probabilistic Models", NeurIPS 2020,
+arXiv:2006.11239. Paraphrased excerpt of Section 2 (Eqs. 2 and 4) and Section 4, checked against the
+arXiv PDF on 2026-10-03.
+
+Diffusion models are latent variable models whose approximate posterior q(x_1:T | x_0), called the
+forward or diffusion process, is fixed to a Markov chain that gradually adds Gaussian noise to the
+data according to a variance schedule beta_1, ..., beta_T:
+    q(x_t | x_{t-1}) = N(x_t; sqrt(1 - beta_t) x_{t-1}, beta_t I)            (Eq. 2)
+A notable property of the forward process is that it admits sampling x_t at an arbitrary timestep t
+in closed form. Using alpha_t = 1 - beta_t and alpha_bar_t = product over s = 1..t of alpha_s,
+    q(x_t | x_0) = N(x_t; sqrt(alpha_bar_t) x_0, (1 - alpha_bar_t) I)        (Eq. 4)
+so x_t = sqrt(alpha_bar_t) x_0 + sqrt(1 - alpha_bar_t) epsilon with epsilon ~ N(0, I). This makes
+training efficient, because random terms of the training objective can be optimised at any t.
+In the experiments (Section 4) the authors set T = 1000 and the forward variances to constants
+increasing linearly from beta_1 = 1e-4 to beta_T = 0.02, small relative to data scaled to [-1, 1],
+so that the signal-to-noise ratio at x_T is as small as possible (x_T is close to pure noise).

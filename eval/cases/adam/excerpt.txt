@@ -1,0 +1,17 @@
+Source: D. P. Kingma and J. Ba, "Adam: A Method for Stochastic Optimization", ICLR 2015, arXiv:1412.6980
+(v9). Paraphrased excerpt of Section 2 (Algorithm 1) and Section 3, checked against the arXiv PDF on
+2026-10-03.
+
+Adam keeps exponential moving averages of the gradient (m_t) and of the squared gradient (v_t), with
+decay rates beta1, beta2 in [0, 1). These estimate the first moment (mean) and the second raw moment
+(uncentered variance) of the gradient. Algorithm 1, with g_t the gradient at step t:
+    m_t = beta1 m_{t-1} + (1 - beta1) g_t
+    v_t = beta2 v_{t-1} + (1 - beta2) g_t^2
+    m_hat_t = m_t / (1 - beta1^t),   v_hat_t = v_t / (1 - beta2^t)
+    theta_t = theta_{t-1} - alpha m_hat_t / (sqrt(v_hat_t) + epsilon)
+Good default settings for the tested problems are alpha = 0.001, beta1 = 0.9, beta2 = 0.999 and
+epsilon = 1e-8. Because the moving averages are initialised as zeros, the moment estimates are biased
+towards zero, especially during the initial timesteps and especially when the decay rates are close
+to 1. Section 3 shows that E[v_t] = E[g_t^2] (1 - beta2^t) + zeta (zeta small if the second moment is
+stationary), so dividing by (1 - beta2^t) corrects the bias; the same holds for m_t. Without the
+correction, when beta2 is close to 1 the early steps would be much too large.

@@ -1,0 +1,5 @@
+{
+  "source_url": "https://huggingface.co/datasets/SciCode1/SciCode",
+  "focus": "Abrupt p-n junction electrostatics in the depletion approximation (SciCode problem 34). Explain how doping sets the built-in potential and how charge neutrality splits the depletion region between the p and n sides. Let the learner set the acceptor and donor concentrations, the intrinsic carrier density and the relative permittivity. Show the built-in potential, x_n, x_p, the charge density, the triangular electric field and the parabolic potential (conduction band) across the junction. Guide them through symmetric doping and a one-sided junction. Check that N_a x_p = N_d x_n, that the potential drop equals the built-in potential, and that the more lightly doped side holds most of the depletion width.",
+  "audience": "Electrical engineering junior in a first semiconductor devices course."
+}

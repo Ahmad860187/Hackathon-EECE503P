@@ -1,0 +1,16 @@
+Source: G. A. Akerlof, "The Market for 'Lemons': Quality Uncertainty and the Market Mechanism",
+Quarterly Journal of Economics 84(3) (1970) 488-500, doi:10.2307/1879431. Paraphrased excerpt of
+Section II's formal example; checked against the summary on Wikipedia ("The Market for Lemons") on
+2026-10-03 because the PDF mirror returned 403.
+
+There are two groups of traders. Group one owns N cars whose quality x is uniformly distributed
+between 0 and 2, and has utility U1 = M + sum of x_i over cars owned (M is consumption of other
+goods). Group two has utility U2 = M + sum of (3/2) x_i. Both groups know the average quality of cars
+on the market but only the owner knows the quality of a particular car. At price p, group-one owners
+supply the cars whose quality is at most p, so the supply is pN/2 and the average quality of cars
+offered is p/2. A buyer from group two values such an average car at (3/2)(p/2) = 3p/4, which is less
+than p, so at no price will any trade take place, even though at any price between 0 and 3 there
+would be traders willing to buy and sell. If instead quality were known to everyone (symmetric
+information), cars of every quality would trade at prices between the two valuations, and both
+groups would gain. Bad cars drive out good: the presence of dishonest or low-quality sellers can
+destroy the market for honest high-quality sellers.

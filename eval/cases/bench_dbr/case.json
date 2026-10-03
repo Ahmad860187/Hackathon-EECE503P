@@ -1,0 +1,5 @@
+{
+  "source_url": "https://huggingface.co/datasets/SciCode1/SciCode",
+  "focus": "Reflection spectrum of a distributed Bragg reflector made of quarter-wave GaAs/AlAs layers (SciCode problem 39, transfer-matrix method for a periodic stack). Explain why many weakly reflecting interfaces add up to near-total reflection at the Bragg wavelength. Let the learner set the two refractive indices, the number of layer pairs and the design wavelength, and sweep the incident wavelength. Show the phase per layer, the trace (A + D)/2 of the unit-cell matrix, and the reflectance spectrum with the stop band. Guide them through few versus many pairs and through a small versus large index contrast. Check that reflectance stays between 0 and 1, that inside the stop band |(A + D)/2| > 1, and that at the Bragg wavelength reflectance approaches 1 as the number of pairs grows.",
+  "audience": "Electrical engineering senior in a photonics elective; knows complex numbers and 2x2 matrices."
+}

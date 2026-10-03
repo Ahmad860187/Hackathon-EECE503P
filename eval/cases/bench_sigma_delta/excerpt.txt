@@ -1,0 +1,17 @@
+Benchmark provenance: TheoremExplainBench theorem_207 "Sigma-Delta Modulation" (comp_sci / Digital Signal
+Processing, Hard), MIT licence, https://huggingface.co/datasets/TIGER-Lab/TheoremExplainBench. The
+benchmark's description: a sigma-delta modulator converts a voltage into a high-frequency one-bit
+digital bitstream using oversampling and noise shaping. Primary source: H. Inose, Y. Yasuda and
+J. Murakami, IRE Trans. Space Electronics and Telemetry SET-8 (1962) 204-209. Paraphrased; not
+checked against the paywalled original.
+
+A first-order delta-sigma modulator is a feedback loop with an integrator (the "sigma", a running sum)
+and a one-bit quantiser (comparator). At each clock tick the loop subtracts the previous output bit
+(the "delta") from the input, adds the difference to the integrator, and outputs +1 if the integrator
+is non-negative and -1 otherwise:
+    v[n] = v[n-1] + x[n] - y[n-1],    y[n] = +1 if v[n] >= 0 else -1.
+Because the integrator stays bounded, the average of the output bits over N ticks differs from the
+average input by at most a bounded amount divided by N, so the density of +1s encodes the input
+value. Running the loop much faster than the signal changes (oversampling) and low-pass filtering the
+bit stream recovers the signal; the feedback pushes quantisation noise towards high frequencies
+(noise shaping).

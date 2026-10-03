@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1080/0022250X.1971.9989794",
+  "focus": "Schelling (1971), Dynamic Models of Segregation, the spatial proximity model. Explain how mild individual preferences about neighbours can produce strong overall segregation. Use a small grid of two groups with some empty cells and a seeded random start. Let the learner set the share of like neighbours each agent wants, the share of empty cells, and the random seed, and step or play the dynamics. Show the grid, the number of unhappy agents, and the average share of like neighbours over time. Guide them through a tolerant threshold near one third and a stricter threshold near one half. Check that with threshold 0 nobody moves, that agent counts are conserved, and that the run stops when nobody is unhappy.",
+  "audience": "Civil engineering undergraduate interested in urban planning; no programming experience assumed."
+}

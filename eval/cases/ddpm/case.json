@@ -1,0 +1,5 @@
+{
+  "source_url": "https://arxiv.org/abs/2006.11239",
+  "focus": "Denoising Diffusion Probabilistic Models (Ho, Jain and Abbeel 2020), Section 2, the forward (noising) process and its closed form q(x_t | x_0). Explain how repeatedly adding small Gaussian noise shrinks the signal and why x_t can be sampled directly from x_0. Use a one-dimensional data value (or a few points) and a linear beta schedule. Let the learner change the timestep t, the schedule endpoints, the number of steps T, the data value and the noise seed. Show beta_t, alpha-bar_t, the signal and noise coefficients and the resulting distribution of x_t. Guide them through small t and t near T. Check that sqrt(alpha-bar)^2 + sqrt(1-alpha-bar)^2 = 1, that alpha-bar decreases with t, and that iterating the one-step process matches the closed form. Do not train a model.",
+  "audience": "Engineering undergraduate familiar with the Gaussian distribution and expectation, new to generative models."
+}

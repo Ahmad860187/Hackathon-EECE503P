@@ -1,0 +1,5 @@
+{
+  "source_url": "https://huggingface.co/datasets/SciCode1/SciCode",
+  "focus": "Reciprocal lattice vectors of a crystal (SciCode problem 38; the standard construction from solid-state physics). Explain how reciprocal vectors b_i = 2 pi (a_j x a_k) / (a_1 . (a_2 x a_3)) are built from real-space lattice vectors and why a_i . b_j = 2 pi delta_ij. Let the learner edit two or three lattice vectors (and the lattice angle in 2D). Show the real and reciprocal vectors, the cell volume and the matrix of dot products a_i . b_j. Guide them through a square lattice and a stretched or skewed one. Check that a_i . b_j equals 2 pi on the diagonal and 0 elsewhere, and that a longer real-space vector gives a shorter reciprocal vector.",
+  "audience": "Materials science and engineering junior who knows vectors and the cross product, new to crystallography."
+}

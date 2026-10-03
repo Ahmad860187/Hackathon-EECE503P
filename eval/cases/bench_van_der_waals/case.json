@@ -1,0 +1,5 @@
+{
+  "source_url": "https://www.nobelprize.org/uploads/2018/06/waals-lecture.pdf",
+  "focus": "Van der Waals equation of state, (P + a/V_m^2)(V_m - b) = R T, as described in his 1910 Nobel lecture The Equation of State for Gases and Liquids. Explain how the two corrections (attraction a and excluded volume b) bend the ideal-gas isotherms and create a critical point. Let the learner set temperature, molar volume and the constants a and b (default carbon dioxide). Show pressure from the van der Waals and ideal-gas laws, a family of isotherms, and the critical point. Guide them through a temperature above the critical temperature and one below it, where the isotherm develops a loop. Check that T_c = 8a/(27 R b), P_c = a/(27 b^2), V_c = 3b, and that at large volume the equation approaches the ideal gas.",
+  "audience": "Chemical engineering sophomore in a thermodynamics course who knows the ideal gas law."
+}

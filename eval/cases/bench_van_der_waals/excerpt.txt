@@ -1,0 +1,20 @@
+Benchmark provenance: TheoremExplainBench theorem_190 "Van der Waals Equation" (physics / Thermodynamics,
+Hard), MIT licence, https://huggingface.co/datasets/TIGER-Lab/TheoremExplainBench. The benchmark's
+description: an equation of state for real gases relating pressure, temperature and molar volume.
+Primary source: J. D. van der Waals, "The Equation of State for Gases and Liquids", Nobel Lecture,
+12 December 1910. Paraphrased; checked against the lecture PDF text on 2026-10-03.
+
+Van der Waals corrected the ideal-gas law P V_m = R T for two effects. Molecules attract one another,
+which lowers the pressure they exert on the walls; this is represented by an added "internal pressure"
+a / V_m^2. Molecules also occupy volume themselves, so the free volume is V_m - b. The resulting
+equation of state is
+
+    (P + a / V_m^2)(V_m - b) = R T,   i.e.  P = R T / (V_m - b) - a / V_m^2.
+
+Below a critical temperature the isotherms have a maximum and a minimum (a "loop"), which signals
+the coexistence of liquid and gas; above it they decrease monotonically. At the critical point the
+isotherm has an inflection with zero slope, giving T_c = 8a / (27 R b), P_c = a / (27 b^2) and
+V_c = 3b, so the model predicts P_c V_c / (R T_c) = 3/8 for every gas. At large molar volume both
+corrections become negligible and the ideal-gas law is recovered. In the lecture van der Waals stresses
+that b is not truly constant (it shrinks at small volumes), so measured critical values of real gases
+deviate from these simple predictions.

@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+out/
+eval/runs/
+eval/fixtures/
+.claude/settings.local.json
+.claude/
+dev/
+*.pdf
+eval/cases/*/reference.json

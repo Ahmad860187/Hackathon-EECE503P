@@ -1,0 +1,5 @@
+{
+  "source_url": "https://arxiv.org/abs/1412.6980",
+  "focus": "Adam: A Method for Stochastic Optimization (Kingma and Ba), Algorithm 1 and Section 3. Explain the initialization bias of the moving averages and how the bias correction removes it, using a short sequence of scalar gradients. Let the learner edit the gradient sequence, beta1, beta2 and the step size, and toggle bias correction. Show m_t, v_t, the corrected estimates and the resulting step at each time step. Guide them through a constant gradient and through beta2 close to one. Check that with a constant gradient the corrected estimates equal the gradient and its square at every step, and that the first corrected step has magnitude close to the step size alpha. Do not train a neural network.",
+  "audience": "Computer engineering undergraduate who has used plain stochastic gradient descent but not Adam."
+}

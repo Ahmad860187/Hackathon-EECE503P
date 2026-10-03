@@ -1,0 +1,5 @@
+{
+  "source_url": "https://ieeexplore.ieee.org/document/5055024",
+  "focus": "Nyquist (1928), Certain Topics in Telegraph Transmission Theory: the limit of 2B independent values per second in a band B, read today as the sampling criterion. Explain sampling and aliasing using a single sinusoid. Let the learner set the signal frequency and the sampling rate. Show the continuous signal, the samples, and the lowest-frequency sinusoid that passes through the same samples. Guide them through sampling well above twice the signal frequency and below it. Check that the apparent frequency equals the true one when fs > 2f, that a 7 Hz tone sampled at 10 Hz appears at 3 Hz, and be honest about what Nyquist's paper did and did not state.",
+  "audience": "Electrical engineering sophomore taking a first signals-and-systems course."
+}

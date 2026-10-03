@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1109/IRET-SET.1962.5008839",
+  "focus": "Inose, Yasuda and Murakami (1962), A Telemetering System by Code Modulation: Delta-Sigma Modulation. Explain how a first-order delta-sigma modulator turns a slowly varying input into a one-bit stream whose average equals the input. Let the learner set a constant input between -1 and 1 and the number of samples, and step through the loop. Show, at each step, the integrator state, the comparator output bit and the running average of the bits. Guide them through input 0 and input 0.5. Check that the running average converges to the input with error at most about 2/N and that the integrator stays bounded.",
+  "audience": "Electrical engineering junior who knows feedback loops and binary numbers, new to data converters."
+}

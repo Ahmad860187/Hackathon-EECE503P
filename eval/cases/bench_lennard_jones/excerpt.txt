@@ -1,0 +1,17 @@
+Benchmark provenance: SciCode problem 47 "Internal_Energy", step 47.1 (and 47.2-47.3), Apache-2.0,
+https://huggingface.co/datasets/SciCode1/SciCode. Background paraphrased from the scientist-written
+step background; primary source: J. E. Lennard-Jones, Proc. R. Soc. Lond. A 106 (1924) 463-477.
+
+The Lennard-Jones potential models the soft repulsive and attractive (van der Waals) interactions
+between electrically neutral atoms or molecules. Its common form is
+
+    V_LJ(r) = 4 epsilon [ (sigma / r)^12 - (sigma / r)^6 ],
+
+where r is the distance between the two particles, epsilon is the depth of the potential well (the
+"dispersion energy") and sigma is the distance at which the pair energy is zero (the "size" of the
+particle). The r^-12 term describes Pauli repulsion at short range, and the r^-6 term describes the
+attraction from induced dipoles at longer range. The minimum of the potential lies at
+r_min = 2^(1/6) sigma, where V = -epsilon and the force F = -dV/dr is zero.
+
+For a group of atoms, the energy of a single atom is the sum of its pair energies with every other
+atom, and the total energy of the system is the sum over all distinct pairs (each pair counted once).

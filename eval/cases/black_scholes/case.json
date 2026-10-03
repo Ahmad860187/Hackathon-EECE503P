@@ -1,0 +1,5 @@
+{
+  "source_url": "https://www.journals.uchicago.edu/doi/10.1086/260062",
+  "focus": "Black and Scholes (1973), The Pricing of Options and Corporate Liabilities, the option valuation formula. Explain how a European call price depends on the stock price, strike, time to expiry, interest rate and volatility, using the closed-form formula. Let the learner change each input. Show d1, d2, N(d1), N(d2), the call price, and the price curve against stock price next to the payoff at expiry. Guide them through increasing volatility and through an option far in the money. Check put-call parity, that the price lies between max(S - K e^{-rT}, 0) and S, and that the call price rises with volatility.",
+  "audience": "Electrical engineering junior comfortable with calculus and the normal distribution but with no finance background."
+}

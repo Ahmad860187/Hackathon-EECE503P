@@ -1,0 +1,5 @@
+{
+  "source_url": "https://www.science.org/doi/10.1126/science.28.706.49",
+  "focus": "Hardy (1908), Mendelian Proportions in a Mixed Population. Explain why genotype proportions reach a stable equilibrium after one generation of random mating and why a dominant allele does not automatically spread. Let the learner set the starting genotype proportions (AA, Aa, aa). Show allele frequencies, the next generation's genotype proportions, and the condition q^2 = p r in Hardy's notation. Guide them through a population of only AA and aa, and through a rare dominant allele. Check that genotype proportions sum to one, that allele frequency is unchanged across generations, and that the second generation equals the first equilibrium.",
+  "audience": "Biomedical engineering undergraduate with only high-school biology."
+}

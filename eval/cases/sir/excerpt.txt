@@ -1,0 +1,18 @@
+Source: W. O. Kermack and A. G. McKendrick, "A Contribution to the Mathematical Theory of Epidemics",
+Proc. Royal Society of London A 115 (1927) 700-721. Quoted from the public-domain original
+(text checked against a scanned copy, https://math.unm.edu/~sulsky/mathcamp/KermackMcKendrick1927.pdf):
+
+"It will be shown in the sequel that with these reservations, the course of an epidemic is not
+necessarily terminated by the exhaustion of the susceptible members of the community. It will appear
+that for each particular set of infectivity, recovery and death rates, there exists a critical or
+threshold density of population. If the actual population density be equal to (or below) this
+threshold value the introduction of one (or more) infected person does not give rise to an epidemic,
+whereas if the population be only slightly more dense a small epidemic occurs."
+
+Paraphrase of the special case with constant rates: x = density of susceptibles, y = density of
+infected (ill), z = density removed (recovered or dead), kappa = infectivity rate, l = removal rate:
+    dx/dt = -kappa x y,   dy/dt = kappa x y - l y,   dz/dt = l y,   x + y + z = N (constant).
+The threshold density is l/kappa: y can only grow while x > l/kappa.
+
+From the summary: "No epidemic can occur if the population density is below this threshold value"
+and "An epidemic, in general, comes to an end, before the susceptible population has been exhausted."

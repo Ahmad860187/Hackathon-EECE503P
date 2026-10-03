@@ -1,0 +1,5 @@
+{
+  "source_url": "https://royalsocietypublishing.org/doi/10.1098/rspa.1927.0118",
+  "focus": "Kermack and McKendrick (1927), A Contribution to the Mathematical Theory of Epidemics, the special case with constant infection and removal rates. Explain the SIR threshold mechanism with small inputs (population fractions, infection rate, removal rate). Show S, I and R over time and the basic reproduction ratio. Let the learner change the rates and the initial susceptible fraction. Guide them through a case below the threshold and one well above it. Check that S + I + R stays constant, that no epidemic grows when S0 times beta/gamma is at most 1, and that the epidemic ends before all susceptibles are infected.",
+  "audience": "Mechanical engineering sophomore who has taken one course on ordinary differential equations."
+}

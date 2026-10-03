@@ -1,0 +1,20 @@
+Source: C. E. Shannon, "A Mathematical Theory of Communication", Bell System Technical Journal 27
+(1948), Section 6 "Choice, Uncertainty and Entropy". Paraphrased excerpt, checked against
+https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf (pp. 10-11).
+
+Suppose a set of possible events has known probabilities p1, p2, ..., pn. Shannon asks for a measure
+H(p1, ..., pn) of how much "choice" is involved, or how uncertain we are of the outcome, and requires:
+1. H is continuous in the pi.
+2. If all pi are equal (pi = 1/n), H increases monotonically with n: equally likely events offer more
+   choice when there are more of them.
+3. If a choice is broken into two successive choices, the original H is the weighted sum of the
+   individual H values, e.g. H(1/2, 1/3, 1/6) = H(1/2, 1/2) + (1/2) H(2/3, 1/3).
+
+Theorem 2: the only H satisfying these three assumptions has the form H = -K sum_i pi log pi, where K
+is a positive constant that merely fixes the unit of measure. Shannon calls H = -sum pi log pi the
+entropy of the set of probabilities. With base-2 logarithms the unit is bits. For two possibilities
+with probabilities p and q = 1 - p, H = -(p log p + q log q) (Fig. 7).
+
+Properties stated in the section: H = 0 if and only if all the pi but one are zero (we are certain
+of the outcome); otherwise H is positive. For a given n, H is a maximum, equal to log n, when all the
+pi are equal to 1/n.

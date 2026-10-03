@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.2307/1879431",
+  "focus": "Akerlof (1970), The Market for 'Lemons': Quality Uncertainty and the Market Mechanism, the formal used-car example. Explain adverse selection: when only sellers know quality, the price buyers will pay reflects average quality, so good cars leave the market. Let the learner set the price and how much more buyers value a car than sellers do. Show which cars are offered, their average quality, and whether buyers are willing to pay the price. Guide them through Akerlof's case (buyers value quality at 3/2 of sellers) and a case with a much larger valuation gap. Check that the average quality offered at price p is p/2 for quality uniform on [0, 2], and that with the 3/2 valuation no price leads to trade, while with symmetric information all cars would trade.",
+  "audience": "Industrial engineering undergraduate who has taken an introductory microeconomics course."
+}

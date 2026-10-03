@@ -1,0 +1,17 @@
+Source: T. C. Schelling, "Dynamic Models of Segregation", Journal of Mathematical Sociology 1 (1971)
+143-186, doi:10.1080/0022250X.1971.9989794. Paraphrased excerpt, checked against a scanned copy
+(https://www.stat.berkeley.edu/~aldous/157/Papers/Schelling_Seg_Models.pdf) on 2026-10-03.
+
+Schelling studies how individual choices about where to live can produce collective segregation that
+nobody intends. People belong to one of two recognisable groups (he uses stars and zeros). In the
+spatial proximity models each person defines a neighbourhood by reference to his own location: in the
+linear model, the people within a fixed distance on each side; in the two-dimensional checkerboard
+model, the surrounding squares. An individual moves if he is not content with the colour mix of his
+neighbourhood, for example if fewer than a given fraction of his neighbours are like himself, and he
+moves to the nearest place where the mix does meet his demands. Everyone of a given colour is assumed
+to have the same preferences. Moves change the neighbourhoods of others, which can make further people
+discontent, producing chain reactions. Starting from a random mixture, the process typically ends in
+clusters that are much more segregated than any individual's demand: even a population content to
+live in a 50:50 mixture ends up highly separated. Schelling also analyses a "bounded neighbourhood"
+model in which people care about the colour ratio of a whole common area, with varying tolerances;
+there, tipping can make a neighbourhood become entirely one colour.

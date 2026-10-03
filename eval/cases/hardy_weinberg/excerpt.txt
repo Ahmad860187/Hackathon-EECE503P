@@ -1,0 +1,19 @@
+Source: G. H. Hardy, "Mendelian Proportions in a Mixed Population", Science 28 (1908) 49-50,
+doi:10.1126/science.28.706.49 (public domain). Paraphrase with short quotations; the original PDF
+mirrors were unreachable from our network, so the content was checked against secondary summaries
+(search results and PMC commentary) on 2026-10-03.
+
+Hardy replies to the suggestion that a dominant character, such as brachydactyly, should be expected
+to spread until three quarters of a population show it. Suppose a single pair of Mendelian characters
+A and a, and that in one generation the pure dominants (AA), heterozygotes (Aa) and pure recessives
+(aa) occur in the proportions p : 2q : r. With random mating, equal fertility and survival, and a
+large population, the next generation's proportions are
+
+    (p + q)^2 : 2(p + q)(q + r) : (q + r)^2,   or p1 : 2q1 : r1.
+
+The distribution is unchanged from one generation to the next exactly when q^2 = p r. Hardy notes
+that q1^2 = p1 r1 always holds, so whatever the starting proportions, the population reaches this
+stable distribution after a single generation and stays there. Hence there is no tendency for a
+dominant character to increase: a dominant allele that is rare stays rare. (Weinberg reached the same
+result independently in 1908.) In modern notation, with allele frequencies p_A and p_a = 1 - p_A, the
+equilibrium genotype frequencies are p_A^2, 2 p_A p_a and p_a^2.

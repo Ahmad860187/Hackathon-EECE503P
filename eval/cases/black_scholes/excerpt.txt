@@ -1,0 +1,20 @@
+Source: F. Black and M. Scholes, "The Pricing of Options and Corporate Liabilities", Journal of
+Political Economy 81(3) (1973) 637-654, doi:10.1086/260062. Paraphrased excerpt (the scanned JSTOR
+copy we fetched has no text layer; content is the paper's well-known Eq. (13)).
+
+The paper assumes ideal conditions: the short-term interest rate r is known and constant; the stock
+price follows a random walk in continuous time with variance rate proportional to the square of the
+price, so its distribution at the end of any finite interval is log-normal, with constant variance
+rate v^2; the stock pays no dividends; the option is European (exercised only at maturity); there are
+no transaction costs; borrowing at the short rate and short selling are allowed. Under these
+conditions a hedged position of stock and options can be formed whose value does not depend on the
+stock price, so it must earn the riskless rate. This leads to a differential equation for the option
+value whose solution, for a call with exercise price c and maturity t*, is
+
+    w(x, t) = x N(d1) - c e^{r(t - t*)} N(d2),
+    d1 = [ln(x/c) + (r + v^2/2)(t* - t)] / (v sqrt(t* - t)),   d2 = d1 - v sqrt(t* - t),
+
+where x is the stock price and N is the cumulative normal distribution. In modern notation:
+C = S N(d1) - K e^{-rT} N(d2). The option value increases with the stock price, the time to maturity,
+the interest rate and the variance rate of the stock's return, and it does not depend on the
+stock's expected return.

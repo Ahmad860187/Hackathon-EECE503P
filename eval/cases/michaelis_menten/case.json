@@ -1,0 +1,5 @@
+{
+  "source_url": "https://pubs.acs.org/doi/10.1021/bi201284u",
+  "focus": "Michaelis and Menten (1913), Die Kinetik der Invertinwirkung (English translation by Johnson and Goody, 2011). Explain how the initial reaction rate depends on substrate concentration through a rapidly formed enzyme-substrate complex. Let the learner change substrate concentration, the maximum rate and the dissociation constant. Show the rate curve, the fraction of enzyme bound, and the substrate value giving half the maximum rate. Guide them through low substrate (nearly linear) and saturating substrate. Check that the rate equals half of Vmax when S equals the constant and never exceeds Vmax.",
+  "audience": "Chemical engineering undergraduate who knows reaction rates and units but has no enzymology background."
+}

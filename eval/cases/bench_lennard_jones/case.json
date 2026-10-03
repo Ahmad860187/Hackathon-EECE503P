@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1098/rspa.1924.0082",
+  "focus": "Lennard-Jones (1924), On the determination of molecular fields, the 12-6 pair potential V(r) = 4 epsilon [(sigma/r)^12 - (sigma/r)^6]. Explain how short-range repulsion and longer-range attraction combine into a potential well. Let the learner change sigma, epsilon and the separation r, and place up to four atoms on a line to sum pair energies. Show the repulsive and attractive terms separately, their sum, the force, and the total energy of the small cluster. Guide them through r = sigma and the minimum. Check that V(sigma) = 0, that the minimum is at r = 2^(1/6) sigma with depth -epsilon, and that the force is zero there.",
+  "audience": "Materials engineering undergraduate who knows Coulomb's law and potential energy but no molecular simulation."
+}

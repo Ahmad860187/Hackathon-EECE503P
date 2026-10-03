@@ -1,0 +1,16 @@
+Benchmark provenance: SciCode problem 34 "PN_diode_band_diagram", steps 34.1-34.3, Apache-2.0,
+https://huggingface.co/datasets/SciCode1/SciCode (test split). Paraphrase of the scientist-written
+background.
+
+Assume constant doping on each side (acceptors N_a on the p side, donors N_d on the n side), Boltzmann
+statistics, fully ionised dopants and room temperature (thermal voltage kT/q = 0.0259 V). The
+built-in biases of the two sides relative to the intrinsic level are
+    phi_p = kT ln(N_a / n_i),   phi_n = kT ln(N_d / n_i),
+and the total built-in potential is phi_i = phi_p + phi_n. Poisson's equation says the gradient of the
+electric field equals the charge density divided by the permittivity epsilon = epsilon_r epsilon_0
+(epsilon_0 = 8.854e-14 F/cm, q = 1.6e-19 C). With constant doping the field is piecewise linear and the
+depletion width is
+    x_d = [ (2 epsilon phi_i / q) (N_a + N_d) / (N_a N_d) ]^(1/2),
+split so that the charges balance: N_a x_p = N_d x_n. Integrating the field gives a potential that is
+quadratic on each side; the conduction-band potential is set to 0 V at the edge of the depletion region
+on the p side and changes by phi_i across the junction (output on a 0.1 nm grid in the benchmark).

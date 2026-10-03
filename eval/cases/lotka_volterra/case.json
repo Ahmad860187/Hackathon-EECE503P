@@ -1,0 +1,5 @@
+{
+  "source_url": "https://www.nature.com/articles/118558a0",
+  "focus": "Volterra (1926), Fluctuations in the abundance of a species considered mathematically (the Lotka-Volterra predator-prey model). Explain why prey and predator populations oscillate out of phase. Let the learner set the prey growth rate, predation rate, predator death rate, conversion rate and the initial populations. Show both populations over time and the phase-plane orbit around the coexistence equilibrium. Guide them through starting exactly at the equilibrium and starting far from it. Check that the equilibrium is (gamma/delta, alpha/beta), that the orbit closes, and that the time-averaged populations over one cycle equal the equilibrium values.",
+  "audience": "Environmental engineering undergraduate who has seen first-order linear ODEs but not coupled nonlinear systems."
+}

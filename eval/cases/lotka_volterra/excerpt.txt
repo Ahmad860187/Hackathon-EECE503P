@@ -1,0 +1,18 @@
+Source: V. Volterra, "Fluctuations in the Abundance of a Species considered Mathematically", Nature 118
+(1926) 558-560, doi:10.1038/118558a0; the same equations were given by A. J. Lotka, Elements of
+Physical Biology (1925). Paraphrased excerpt (publisher page is behind a login; content checked against
+standard secondary summaries on 2026-10-03).
+
+Volterra considers two species living together, one (the prey) feeding on resources that are always
+available and the other (the predator) feeding only on the first. Writing x for the prey and y for the
+predator density,
+    dx/dt = alpha x - beta x y,      dy/dt = delta x y - gamma y,
+where alpha is the prey's natural growth rate, beta the rate at which encounters remove prey, gamma
+the predator's death rate without food and delta the rate at which eaten prey become new predators.
+Volterra states three "laws": (1) the fluctuations are periodic, with a period depending only on the
+coefficients and the initial conditions; (2) conservation of averages: the averages of the two
+populations over a period are constant and equal to the equilibrium values x* = gamma/delta and
+y* = alpha/beta, whatever the initial conditions; (3) if both species are destroyed uniformly and in
+proportion to their numbers, the average prey population increases and the average predator
+population decreases. A quantity V = delta x - gamma ln x + beta y - alpha ln y is conserved, so
+orbits in the (x, y) plane are closed curves around the equilibrium.
