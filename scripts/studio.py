@@ -12,6 +12,7 @@ import html
 import json
 import os
 import subprocess
+import threading
 import sys
 import time
 import urllib.parse
@@ -72,6 +73,112 @@ __RUNS__
 </main></body></html>"""
 
 
+PROGRESS = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Generating… · Paper to Playground</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#0d1117;--mute:#5b6472;--line:#e3e6eb;--acc:#cc2a61;--ok:#1a7f4b}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0f13;--card:#161a20;--ink:#eef1f5;--mute:#9aa3b2;--line:#262c35;--acc:#e9508a;--ok:#3fbf7f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:56px 20px}
+.k{font:12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+h1{font-size:34px;line-height:1.1;letter-spacing:-.02em;margin:10px 0 24px}
+.bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:28px}
+.bar i{display:block;height:100%;width:3%;background:var(--acc);transition:width .4s ease}
+ol{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+li{display:flex;gap:14px;align-items:flex-start;padding:16px 20px;border-top:1px solid var(--line);color:var(--mute)}
+li:first-child{border-top:0}
+li b{display:block;color:inherit;font-weight:600}
+li small{display:block;font-size:13px;margin-top:2px}
+.dot{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);margin-top:2px;display:grid;place-items:center;font-size:12px}
+li.active{color:var(--ink)}li.active .dot{border-color:var(--acc);border-top-color:transparent;animation:spin .8s linear infinite}
+li.done{color:var(--ink)}li.done .dot{border-color:var(--ok);background:var(--ok);color:#fff}
+li.done .dot::after{content:"✓"}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){li.active .dot{animation:none}}
+.meta{display:flex;gap:24px;margin-top:20px;font:14px ui-monospace,Menlo,Consolas,monospace;color:var(--mute)}
+.meta span b{color:var(--ink)}
+a.btn{display:inline-block;margin-top:24px;padding:13px 18px;border-radius:10px;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:600;visibility:hidden}
+.err{color:var(--acc);margin-top:16px}
+</style></head><body><main>
+<div class="k">Paper to Playground · generating</div>
+<h1 id="h">Building your playground…</h1>
+<div class="bar"><i id="bar"></i></div>
+<ol id="steps">
+<li data-s="load"><span class="dot"></span><div><b>Reading the paper</b><small>Resolve the link and fetch the relevant section</small></div></li>
+<li data-s="generate"><span class="dot"></span><div><b>Writing the explanation</b><small>One model call: content, calculations and visual</small></div></li>
+<li data-s="check"><span class="dot"></span><div><b>Running the checks</b><small>Execute the page's JavaScript: controls, limits, invariants</small></div></li>
+<li data-s="repair"><span class="dot"></span><div><b>Repairing what failed</b><small>Only the failing part is sent back</small></div></li>
+<li data-s="audit"><span class="dot"></span><div><b>Fact-checking the text</b><small>Explanations compared with the computed numbers</small></div></li>
+<li data-s="output"><span class="dot"></span><div><b>Done</b><small>Single offline page + trace</small></div></li>
+</ol>
+<div class="meta"><span>time <b id="t">0 s</b></span><span>model calls <b id="c">0</b></span><span>tokens <b id="tok">0</b></span><span>checks <b id="ck">–</b></span></div>
+<div class="err" id="err"></div>
+<a class="btn" id="open" href="#">Open the playground →</a>
+</main>
+<script>
+const order=["load","generate","check","repair","audit","output"];
+async function poll(){
+  let s; try{ s=await (await fetch("/api/__RUN__")).json(); }catch(e){ return setTimeout(poll,1500); }
+  const reached=new Set(s.stages); let last=-1;
+  order.forEach((k,i)=>{ if(reached.has(k)) last=i; });
+  document.querySelectorAll("#steps li").forEach((li,i)=>{
+    const k=li.dataset.s; li.className = s.done ? (reached.has(k)||k==="output" ? "done":"") :
+      (i<last ? "done" : (i===last ? "active" : ""));
+    if(!s.done && k==="repair" && !reached.has("repair") && last>2) li.className="done";
+  });
+  document.getElementById("t").textContent=s.elapsed+" s";
+  document.getElementById("c").textContent=s.calls;
+  document.getElementById("tok").textContent=s.tokens;
+  document.getElementById("ck").textContent=s.checks||"–";
+  document.getElementById("bar").style.width=(s.done?100:Math.max(3,Math.min(95,(last+1)/order.length*100)))+"%";
+  if(s.done){
+    document.getElementById("h").textContent = s.exit===0 ? "Your playground is ready" : "Finished with check failures";
+    if(s.exit!==0) document.getElementById("err").textContent="Some acceptance checks failed; the best page found is still shown.";
+    const a=document.getElementById("open"); a.href="/runs/__RUN__/out/index.html"; a.style.visibility="visible";
+    setTimeout(()=>{ location.href=a.href; }, 1500);
+  } else setTimeout(poll,1000);
+}
+poll();
+</script></body></html>"""
+
+
+def _run_agent(run: Path, model: str) -> None:
+    t0 = time.time()
+    proc = subprocess.run([sys.executable, str(ROOT / "agent.py"), "--input", str(run / "case.json"),
+                           "--output", str(run / "out"), "--model", model],
+                          cwd=str(ROOT), capture_output=True, text=True, timeout=700)
+    (run / "done.json").write_text(json.dumps({"exit": proc.returncode, "seconds": round(time.time() - t0, 1)}),
+                                   encoding="utf-8")
+
+
+def _status(run: Path) -> dict:
+    stages, calls, tokens, checks = [], 0, 0, ""
+    trace = run / "out" / "trace.jsonl"
+    if trace.is_file():
+        for line in trace.read_text(encoding="utf-8").splitlines():
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            st = e.get("stage")
+            if st == "promote" or st == "normalize" or st == "assemble" or st == "parse":
+                st = None
+            if st == "finalize":
+                st = "audit"
+            if st and st not in stages:
+                stages.append(st)
+            if e.get("action") == "llm_call" and e.get("result") == "ok":
+                calls += 1
+                tokens += sum(v for v in (e.get("prompt_tokens"), e.get("completion_tokens")) if isinstance(v, int))
+            if e.get("stage") == "check" and e.get("action") == "summary":
+                checks = f"{e.get('passed', '?')}/{(e.get('passed') or 0) + (e.get('failed') or 0) + (e.get('skipped') or 0)}"
+    done = run / "done.json"
+    d = json.loads(done.read_text(encoding="utf-8")) if done.is_file() else None
+    started = (run / "case.json").stat().st_mtime
+    return {"stages": stages, "calls": calls, "tokens": tokens, "checks": checks, "done": d is not None,
+            "exit": d["exit"] if d else None, "elapsed": round((d or {}).get("seconds", time.time() - started), 1)}
+
+
 def build_focus(form: dict) -> str:
     """Compose the learning brief in the structure used by the brief's public examples:
     concept → what to change → what to show → what to check (+ standard scope guidance)."""
@@ -115,6 +222,15 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             page = FORM.replace("__RUNS__", "")
             return self._send(200, page.encode("utf-8"))
+        if path.startswith("/progress/"):
+            name = path[len("/progress/"):]
+            if (RUNS / name).is_dir():
+                return self._send(200, PROGRESS.replace("__RUN__", html.escape(name)).encode("utf-8"))
+        if path.startswith("/api/"):
+            name = path[len("/api/"):]
+            if (RUNS / name).is_dir():
+                return self._send(200, json.dumps(_status(RUNS / name)).encode("utf-8"),
+                                  "application/json; charset=utf-8")
         if path.startswith("/runs/"):
             target = (RUNS / path[len("/runs/"):]).resolve()
             if RUNS.resolve() in target.parents and target.is_file():
@@ -129,30 +245,12 @@ class Handler(BaseHTTPRequestHandler):
         form = {k: v[0].strip() for k, v in urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8")).items()}
         case = {"source_url": form.get("source_url", ""), "focus": build_focus(form),
                 "audience": form.get("audience") or "engineering undergraduate"}
-        model = DEFAULT_MODEL
         run = RUNS / time.strftime("%Y%m%d-%H%M%S")
         run.mkdir(parents=True, exist_ok=True)
         (run / "case.json").write_text(json.dumps(case, ensure_ascii=False, indent=2), encoding="utf-8")
-        t0 = time.time()
-        proc = subprocess.run([sys.executable, str(ROOT / "agent.py"), "--input", str(run / "case.json"),
-                               "--output", str(run / "out"), "--model", model],
-                              cwd=str(ROOT), capture_output=True, text=True, timeout=700)
-        secs = round(time.time() - t0, 1)
-        tokens, title = "?", case["focus"][:60]
-        try:
-            for line in (run / "out" / "trace.jsonl").read_text(encoding="utf-8").splitlines():
-                e = json.loads(line)
-                if e.get("action") == "totals":
-                    tokens = e["totals"].get("total_tokens", tokens)
-            page = (run / "out" / "index.html").read_text(encoding="utf-8")
-            if "<title>" in page:
-                title = html.unescape(page.split("<title>", 1)[1].split("</title>", 1)[0]).split(" · ")[0]
-        except Exception:  # noqa: BLE001
-            pass
-        (run / "summary.json").write_text(json.dumps({"title": title, "exit": proc.returncode, "tokens": tokens,
-                                                      "seconds": secs}), encoding="utf-8")
+        threading.Thread(target=_run_agent, args=(run, DEFAULT_MODEL), daemon=True).start()
         self.send_response(303)
-        self.send_header("Location", f"/runs/{run.name}/out/index.html")
+        self.send_header("Location", f"/progress/{run.name}")
         self.end_headers()
 
     def log_message(self, fmt, *args):  # keep the console quiet
