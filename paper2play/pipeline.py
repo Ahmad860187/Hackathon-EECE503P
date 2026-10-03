@@ -298,7 +298,7 @@ class Run:
     # ------------------------------------------------------------------ main
     def execute(self) -> int:
         tr = self.trace
-        self.src = load_source(self.case, self.case_dir, allow_network=self.allow_network)
+        self.src = load_source(self.case, self.case_dir, allow_network=self.allow_network and os.environ.get("P2P_NO_FETCH") != "1")
         tr.event("load", "resolve_source", "ok" if self.src["origin"] != "none" else "skip",
                  origin=self.src["origin"], chars=len(self.src["text"]), detail=self.src["detail"][:300])
         best = None
@@ -324,7 +324,8 @@ class Run:
 
             n_rep = 0
             sent_repairs = set()
-            while best is not None and n_rep < MAX_REPAIRS and chk.failing(best.checks):
+            regenerated = False
+            while best is not None and n_rep < (MAX_REPAIRS if best.accepted else 4) and chk.failing(best.checks):
                 req, opt = self.repair_targets(best)
                 if not req:
                     tr.event("repair", "plan", "skip", detail="failures not repairable by the model",
@@ -346,15 +347,27 @@ class Run:
                             rsys += "\n\n" + load_prompt("kit.md")
                         umsg = self.repair_message(best, req, opt)
                         if umsg in sent_repairs:
-                            # The previous repair did not improve the best candidate, so the request
-                            # would be identical; a deterministic-ish model would return the same fix.
-                            tr.event("repair", "stop", "skip", candidate=label,
-                                     detail="identical repair request already tried; stopping to save tokens")
-                            break
-                        sent_repairs.add(umsg)
-                        msgs = [{"role": "system", "content": rsys}, {"role": "user", "content": umsg}]
-                        res = client.chat(msgs, REPAIR_CAP, stage="repair", purpose=label, min_tokens=800)
-                        cand = self.apply_repair(best, res.text, label)
+                            # The previous repair did not help, so the same request would return the
+                            # same fix. An accepted page stops here (save tokens); a rejected page gets
+                            # one fresh regeneration that is told which checks failed.
+                            if best.accepted or regenerated:
+                                tr.event("repair", "stop", "skip", candidate=label,
+                                         detail="identical repair request already tried; stopping to save tokens")
+                                break
+                            regenerated = True
+                            fails = "; ".join(f"{c['id']}: {c['detail'][:160]}" for c in chk.failing(best.checks))
+                            tr.event("repair", "regenerate", "ok", candidate=label,
+                                     detail="targeted repair did not help; regenerating with the failure list")
+                            msgs = [{"role": "system", "content": sys_msg},
+                                    {"role": "user", "content": user_msg + "\n\nA previous attempt failed these "
+                                     "automated checks; avoid these problems:\n" + fails}]
+                            res = client.chat(msgs, GEN_CAP, stage="repair", purpose=label, min_tokens=2000)
+                            cand = self.candidate_from_text(res.text, label)
+                        else:
+                            sent_repairs.add(umsg)
+                            msgs = [{"role": "system", "content": rsys}, {"role": "user", "content": umsg}]
+                            res = client.chat(msgs, REPAIR_CAP, stage="repair", purpose=label, min_tokens=800)
+                            cand = self.apply_repair(best, res.text, label)
                 except BudgetStop as e:
                     tr.event("repair", "stop", "skip", detail=str(e)[:300])
                     break

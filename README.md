@@ -6,7 +6,7 @@ change inputs and watch the effect.
 
 **Team:** Ahmad Karnib, Mohamad Nasrallah, Hasan Nasrallah
 
-## Run
+## Run (Python 3.11)
 
 ```bash
 python -m pip install -r requirements.txt
@@ -40,6 +40,9 @@ case.json ─► LOAD ─► GENERATE (1 LLM call) ─► ASSEMBLE ─► CHECK 
   principles: an establishing caption, a ghost of the previous state for continuity, one focal accent,
   direct labels, and consistent colour meaning. The model writes no CSS or layout, so output tokens go to
   content and logic only.
+- **Mechanism map** (optional SPEC `map` field, ~150 tokens). Every page gets an overview diagram of the
+  mechanism chain (inputs → steps → output) with live values, drawn by the shell using kit.flow and
+  validated by check C4.
 - **Real checks, no tokens** (`paper2play/checks.py`). The generated JavaScript is executed with
   [quickjs](https://pypi.org/project/quickjs/) against a DOM stub:
   - **Structure:** S1 required fields, S2 self-contained, S3 protocol.
@@ -57,11 +60,13 @@ case.json ─► LOAD ─► GENERATE (1 LLM call) ─► ASSEMBLE ─► CHECK 
   completion tokens per case. Hidden reasoning is disabled by default because it counts as completion
   tokens and dominated latency in our measurements. If a reply is empty because reasoning used up the
   budget, the agent retries with reasoning off.
-- **Source loading** (`paper2play/source.py`). The source is resolved in this order: an excerpt given
-  inline (explicitly marked), a local file, a short fetch (arXiv abs/pdf/html, mirrors, DOIs and bare
-  IDs), or none. The origin is recorded, and the page labels each claim **📄 from the excerpt**,
-  **🧠 from the paper (not verified against an excerpt)** or **🧪 our illustration**. Section and equation
-  numbers are never invented.
+- **Source loading** (`paper2play/source.py`). Resolves in order: inline excerpt (marked), local file,
+  network fetch, or none. **arXiv ingestion layer** recognises IDs from abs/pdf/html, mirrors (ar5iv,
+  alphaxiv, huggingface), DOI `10.48550/arXiv.*`, `arXiv:` forms, old-style (hep-th/…) and bare IDs.
+  Fetch chain: arXiv HTML → abstract → PDF full text (pypdf), with 8 s budget and relevance filter
+  (≥2 focus keywords or 25%). Falls back cleanly to local files/excerpts when only OpenRouter reachable.
+  Also supports local PDF (.pdf), Word (.docx), text/HTML files and inline marked excerpts. Origin
+  labelled: **📄 from excerpt**, **🧠 from paper (not verified)** or **🧪 our illustration**.
 
 ## Trace
 
@@ -101,7 +106,7 @@ repairs and totals. Credentials, headers and reasoning text are never logged.
 
 ## Credits and reuse
 
-- [quickjs](https://pypi.org/project/quickjs/) (MIT): JavaScript engine for checks. [requests](https://pypi.org/project/requests/) (Apache-2.0).
+- [quickjs](https://pypi.org/project/quickjs/) (MIT): JavaScript engine for checks. [requests](https://pypi.org/project/requests/) (Apache-2.0). [pypdf](https://pypi.org/project/pypdf/) (BSD-3-Clause): PDF text extraction.
 - Development cases derived from [SciCode](https://github.com/scicode-bench/SciCode) (Apache-2.0;
   problems 34, 38, 39, 47) and [TheoremExplainBench](https://arxiv.org/abs/2502.19400) (MIT; theorems
   112, 128, 147, 190, 207, 233). Topics for five cases follow
@@ -109,4 +114,5 @@ repairs and totals. Credentials, headers and reasoning text are never logged.
   PaperQuiz evaluation method is re-implemented from [Paper2Poster](https://arxiv.org/abs/2505.21497) (MIT),
   also used by [Paper2Web](https://arxiv.org/abs/2510.15842). See `eval/BENCHMARKS.md`.
 - Built with the help of an AI coding assistant (Claude Code), as permitted by the hackathon rules.
-  All code was reviewed and tested by the team.
+  All code was reviewed and tested by the team. Page design informed by multimedia-learning principles,
+  Apple design guidance (emilkowalski/skills apple-design) and dataviz palette methodology.

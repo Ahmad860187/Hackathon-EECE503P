@@ -1,67 +1,66 @@
 {"t": 0.0, "stage": "start", "action": "run", "result": "ok", "model": "deepseek/deepseek-v4.1-flash", "python": "3.11.5", "limits": {"wall_s": 600.0, "requests": 10, "completion_tokens": 30000}}
 {"t": 0.015, "stage": "load", "action": "validate_case", "result": "ok", "fields": ["source_url", "focus", "audience"]}
 {"t": 0.015, "stage": "load", "action": "resolve_source", "result": "ok", "origin": "file", "chars": 1438, "detail": "read sibling excerpt.txt"}
-{"t": 34.468, "stage": "generate", "action": "llm_call", "result": "ok", "call": 1, "model": "deepseek/deepseek-v4.1-flash", "purpose": "main", "attempt": 1, "prompt_tokens": 2808, "completion_tokens": 3761, "elapsed_s": 34.45, "finish_reason": "stop", "max_tokens": 14000, "chars": 10859, "reasoning_tokens": 0, "cost_usd": 0.0016}
-{"t": 34.468, "stage": "parse", "action": "protocol", "result": "ok", "candidate": "gen", "found": ["SPEC", "COMPUTE", "RENDER"], "notes": [], "spec_error": null}
-{"t": 34.468, "stage": "normalize", "action": "spec_fixes", "result": "ok", "candidate": "gen", "fixes": ["'explorations' was nested inside 'visual'; moved to top level"], "n": 1}
-{"t": 34.468, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "gen", "bytes": 183643}
-{"t": 34.593, "stage": "check", "action": "S1_required_fields", "result": "pass", "candidate": "gen", "detail": "ok"}
-{"t": 34.593, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "gen", "detail": "ok: no external resources"}
-{"t": 34.593, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "gen", "detail": "ok"}
-{"t": 34.593, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "gen", "detail": "compute and render compile"}
-{"t": 34.593, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "gen", "detail": "finite values for 6 intermediates; deterministic"}
-{"t": 34.593, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "gen", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
-{"t": 34.593, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "gen", "detail": "all 5 controls change the output"}
-{"t": 34.593, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "gen", "detail": "render ok at defaults and presets"}
-{"t": 34.593, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "gen", "detail": "all JS evaluations under 1s"}
-{"t": 34.593, "stage": "check", "action": "C1_model_tests", "result": "fail", "candidate": "gen", "detail": "'row 0 of the default case: scores 1,0,1 -> weights (0.468,0.' is false: Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2]-0.4683)<1e-3"}
-{"t": 34.593, "stage": "check", "action": "C2_exploration_presets", "result": "pass", "candidate": "gen", "detail": "both presets change their watched value"}
-{"t": 34.593, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "gen", "detail": "4 invariants hold at defaults + presets"}
-{"t": 34.593, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "gen", "detail": "11 live keys resolve"}
-{"t": 34.593, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "gen", "detail": "origin=file; 6 claims labelled"}
-{"t": 34.593, "stage": "check", "action": "summary", "result": "pass", "candidate": "gen", "accepted": true, "passed": 13, "failed": 1, "skipped": 0, "failing": ["C1"]}
-{"t": 34.593, "stage": "repair", "action": "plan", "result": "ok", "candidate": "repair1", "targets": ["COMPUTE"], "optional": ["SPEC"], "mode": "targeted"}
-{"t": 39.734, "stage": "repair", "action": "llm_call", "result": "ok", "call": 2, "model": "deepseek/deepseek-v4.1-flash", "purpose": "repair1", "attempt": 1, "prompt_tokens": 2347, "completion_tokens": 605, "elapsed_s": 5.14, "finish_reason": "stop", "max_tokens": 7000, "chars": 1655, "reasoning_tokens": 0, "cost_usd": 0.0007}
-{"t": 39.734, "stage": "repair", "action": "apply", "result": "ok", "candidate": "repair1", "replaced": ["COMPUTE"]}
-{"t": 39.75, "stage": "normalize", "action": "spec_fixes", "result": "ok", "candidate": "repair1", "fixes": ["'explorations' was nested inside 'visual'; moved to top level"], "n": 1}
-{"t": 39.75, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "repair1", "bytes": 183643}
-{"t": 39.843, "stage": "check", "action": "S1_required_fields", "result": "pass", "candidate": "repair1", "detail": "ok"}
-{"t": 39.843, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "repair1", "detail": "ok: no external resources"}
-{"t": 39.843, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "repair1", "detail": "ok"}
-{"t": 39.843, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "repair1", "detail": "compute and render compile"}
-{"t": 39.843, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "repair1", "detail": "finite values for 6 intermediates; deterministic"}
-{"t": 39.843, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "repair1", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
-{"t": 39.843, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "repair1", "detail": "all 5 controls change the output"}
-{"t": 39.843, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "repair1", "detail": "render ok at defaults and presets"}
-{"t": 39.843, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "repair1", "detail": "all JS evaluations under 1s"}
-{"t": 39.843, "stage": "check", "action": "C1_model_tests", "result": "fail", "candidate": "repair1", "detail": "'row 0 of the default case: scores 1,0,1 -> weights (0.468,0.' is false: Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2]-0.4683)<1e-3"}
-{"t": 39.843, "stage": "check", "action": "C2_exploration_presets", "result": "pass", "candidate": "repair1", "detail": "both presets change their watched value"}
-{"t": 39.843, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "repair1", "detail": "4 invariants hold at defaults + presets"}
-{"t": 39.843, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "repair1", "detail": "11 live keys resolve"}
-{"t": 39.843, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "repair1", "detail": "origin=file; 6 claims labelled"}
-{"t": 39.843, "stage": "check", "action": "summary", "result": "pass", "candidate": "repair1", "accepted": true, "passed": 13, "failed": 1, "skipped": 0, "failing": ["C1"]}
-{"t": 39.843, "stage": "promote", "action": "select_best", "result": "skip", "candidate": "repair1", "kept": "gen", "score": [1, 13], "kept_score": [1, 13], "detail": "no improvement or a previously passing check regressed"}
-{"t": 39.843, "stage": "repair", "action": "plan", "result": "ok", "candidate": "repair2", "targets": ["COMPUTE"], "optional": ["SPEC"], "mode": "targeted"}
-{"t": 39.843, "stage": "repair", "action": "stop", "result": "skip", "candidate": "repair2", "detail": "identical repair request already tried; stopping to save tokens"}
-{"t": 43.046, "stage": "audit", "action": "llm_call", "result": "ok", "call": 3, "model": "deepseek/deepseek-v4.1-flash", "purpose": "fidelity", "attempt": 1, "prompt_tokens": 927, "completion_tokens": 223, "elapsed_s": 3.2, "finish_reason": "stop", "max_tokens": 2500, "chars": 703, "reasoning_tokens": 0, "cost_usd": 0.0002}
-{"t": 43.046, "stage": "repair", "action": "apply", "result": "ok", "candidate": "audit", "replaced": ["SPEC"]}
-{"t": 43.062, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "audit", "bytes": 183145}
-{"t": 43.156, "stage": "check", "action": "S1_required_fields", "result": "fail", "candidate": "audit", "detail": "need exactly 2 explorations (have 1)"}
-{"t": 43.156, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "audit", "detail": "ok: no external resources"}
-{"t": 43.156, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "audit", "detail": "ok"}
-{"t": 43.156, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "audit", "detail": "compute and render compile"}
-{"t": 43.156, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "audit", "detail": "finite values for 6 intermediates; deterministic"}
-{"t": 43.156, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "audit", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
-{"t": 43.156, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "audit", "detail": "all 5 controls change the output"}
-{"t": 43.156, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "audit", "detail": "render ok at defaults and presets"}
-{"t": 43.156, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "audit", "detail": "all JS evaluations under 1s"}
-{"t": 43.156, "stage": "check", "action": "C1_model_tests", "result": "fail", "candidate": "audit", "detail": "'row 0 of the default case: scores 1,0,1 -> weights (0.468,0.' is false: Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2]-0.4683)<1e-3"}
-{"t": 43.156, "stage": "check", "action": "C2_exploration_presets", "result": "pass", "candidate": "audit", "detail": "both presets change their watched value"}
-{"t": 43.156, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "audit", "detail": "4 invariants hold at defaults + presets"}
-{"t": 43.156, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "audit", "detail": "11 live keys resolve"}
-{"t": 43.156, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "audit", "detail": "origin=file; 6 claims labelled"}
-{"t": 43.156, "stage": "check", "action": "summary", "result": "fail", "candidate": "audit", "accepted": false, "passed": 12, "failed": 2, "skipped": 0, "failing": ["S1", "C1"]}
-{"t": 43.156, "stage": "audit", "action": "fidelity", "result": "skip", "detail": "audit edit rejected (checks regressed)"}
-{"t": 43.171, "stage": "output", "action": "write_index_html", "result": "ok", "kind": "assembled", "bytes": 185072, "candidate": "gen", "accepted": true}
-{"t": 43.171, "stage": "output", "action": "totals", "result": "pass", "totals": {"calls": 3, "prompt_tokens": 6082, "completion_tokens": 4589, "reasoning_tokens": 0, "total_tokens": 10671, "completion_charged": 4589, "elapsed_s": 43.17, "revisions": 2}, "checks": {"S1": "pass", "S2": "pass", "S3": "pass", "X1": "pass", "X2": "pass", "X3": "pass", "X4": "pass", "X5": "pass", "X6": "pass", "C1": "fail", "C2": "pass", "C3": "pass", "C4": "pass", "G1": "pass"}, "failures": ["C1: 'row 0 of the default case: scores 1,0,1 -> weights (0.468,0.' is false: Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2"], "reason": null}
-{"t": 43.171, "stage": "end", "action": "exit", "result": "ok", "code": 0, "elapsed_s": 43.17}
+{"t": 37.687, "stage": "generate", "action": "llm_call", "result": "ok", "call": 1, "model": "deepseek/deepseek-v4.1-flash", "purpose": "main", "attempt": 1, "prompt_tokens": 2870, "completion_tokens": 3651, "elapsed_s": 37.67, "finish_reason": "stop", "max_tokens": 14000, "chars": 10644, "reasoning_tokens": 0, "cost_usd": 0.0019}
+{"t": 37.687, "stage": "parse", "action": "protocol", "result": "ok", "candidate": "gen", "found": ["SPEC", "COMPUTE", "RENDER"], "notes": ["SPEC JSON repaired (comments/trailing commas/truncation)"], "spec_error": null}
+{"t": 37.687, "stage": "normalize", "action": "spec_fixes", "result": "ok", "candidate": "gen", "fixes": ["'explorations' was nested inside 'visual'; moved to top level", "'limitation' was nested inside 'visual'; moved to top level", "'claims' was nested inside 'visual'; moved to top level", "'invariants' was nested inside 'visual'; moved to top level", "'tests' was nested inside 'visual'; moved to top level"], "n": 5}
+{"t": 37.687, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "gen", "bytes": 188793}
+{"t": 37.734, "stage": "check", "action": "S1_required_fields", "result": "pass", "candidate": "gen", "detail": "ok"}
+{"t": 37.734, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "gen", "detail": "ok: no external resources"}
+{"t": 37.734, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "gen", "detail": "ok (SPEC JSON repaired (comments/trailing commas/truncation))"}
+{"t": 37.734, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "gen", "detail": "compute and render compile"}
+{"t": 37.734, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "gen", "detail": "finite values for 6 intermediates; deterministic"}
+{"t": 37.734, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "gen", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
+{"t": 37.734, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "gen", "detail": "all 5 controls change the output"}
+{"t": 37.734, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "gen", "detail": "render ok at defaults and presets"}
+{"t": 37.734, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "gen", "detail": "all JS evaluations under 1s"}
+{"t": 37.734, "stage": "check", "action": "C1_model_tests", "result": "pass", "candidate": "gen", "detail": "5 tests pass"}
+{"t": 37.734, "stage": "check", "action": "C2_exploration_presets", "result": "fail", "candidate": "gen", "detail": "exploration 1: preset {\"Q\": [[1, 0], [0, 1]], \"K\": [[1, 0],... does not change r.weights"}
+{"t": 37.734, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "gen", "detail": "4 invariants hold at defaults + presets"}
+{"t": 37.734, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "gen", "detail": "12 live keys resolve"}
+{"t": 37.734, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "gen", "detail": "origin=file; 5 claims labelled"}
+{"t": 37.734, "stage": "check", "action": "summary", "result": "pass", "candidate": "gen", "accepted": true, "passed": 13, "failed": 1, "skipped": 0, "failing": ["C2"]}
+{"t": 37.734, "stage": "repair", "action": "plan", "result": "ok", "candidate": "repair1", "targets": ["SPEC"], "optional": ["COMPUTE"], "mode": "targeted"}
+{"t": 40.765, "stage": "repair", "action": "llm_call", "result": "ok", "call": 2, "model": "deepseek/deepseek-v4.1-flash", "purpose": "repair1", "attempt": 1, "prompt_tokens": 3527, "completion_tokens": 326, "elapsed_s": 3.03, "finish_reason": "stop", "max_tokens": 7000, "chars": 1157, "reasoning_tokens": 0, "cost_usd": 0.0007}
+{"t": 40.765, "stage": "repair", "action": "apply", "result": "ok", "candidate": "repair1", "replaced": ["SPEC"]}
+{"t": 40.765, "stage": "normalize", "action": "spec_fixes", "result": "ok", "candidate": "repair1", "fixes": ["'limitation' was nested inside 'visual'; moved to top level", "'claims' was nested inside 'visual'; moved to top level", "'invariants' was nested inside 'visual'; moved to top level", "'tests' was nested inside 'visual'; moved to top level"], "n": 4}
+{"t": 40.765, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "repair1", "bytes": 188786}
+{"t": 40.812, "stage": "check", "action": "S1_required_fields", "result": "pass", "candidate": "repair1", "detail": "ok"}
+{"t": 40.812, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "repair1", "detail": "ok: no external resources"}
+{"t": 40.812, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "repair1", "detail": "ok"}
+{"t": 40.812, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "repair1", "detail": "compute and render compile"}
+{"t": 40.812, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "repair1", "detail": "finite values for 6 intermediates; deterministic"}
+{"t": 40.812, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "repair1", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
+{"t": 40.812, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "repair1", "detail": "all 5 controls change the output"}
+{"t": 40.812, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "repair1", "detail": "render ok at defaults and presets"}
+{"t": 40.812, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "repair1", "detail": "all JS evaluations under 1s"}
+{"t": 40.812, "stage": "check", "action": "C1_model_tests", "result": "pass", "candidate": "repair1", "detail": "5 tests pass"}
+{"t": 40.812, "stage": "check", "action": "C2_exploration_presets", "result": "pass", "candidate": "repair1", "detail": "both presets change their watched value"}
+{"t": 40.812, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "repair1", "detail": "4 invariants hold at defaults + presets"}
+{"t": 40.812, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "repair1", "detail": "12 live keys resolve"}
+{"t": 40.812, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "repair1", "detail": "origin=file; 5 claims labelled"}
+{"t": 40.812, "stage": "check", "action": "summary", "result": "pass", "candidate": "repair1", "accepted": true, "passed": 14, "failed": 0, "skipped": 0, "failing": []}
+{"t": 40.812, "stage": "promote", "action": "select_best", "result": "ok", "candidate": "repair1", "previous": "gen", "score": [1, 14], "previous_score": [1, 13]}
+{"t": 46.593, "stage": "audit", "action": "llm_call", "result": "ok", "call": 3, "model": "deepseek/deepseek-v4.1-flash", "purpose": "fidelity", "attempt": 1, "prompt_tokens": 894, "completion_tokens": 195, "elapsed_s": 5.78, "finish_reason": "stop", "max_tokens": 2500, "chars": 647, "reasoning_tokens": 0, "cost_usd": 0.0001}
+{"t": 46.593, "stage": "repair", "action": "apply", "result": "ok", "candidate": "audit", "replaced": ["SPEC"]}
+{"t": 46.593, "stage": "normalize", "action": "spec_fixes", "result": "ok", "candidate": "audit", "fixes": ["'limitation' was nested inside 'visual'; moved to top level", "'claims' was nested inside 'visual'; moved to top level", "'invariants' was nested inside 'visual'; moved to top level", "'tests' was nested inside 'visual'; moved to top level"], "n": 4}
+{"t": 46.609, "stage": "assemble", "action": "inline_shell", "result": "ok", "candidate": "audit", "bytes": 188253}
+{"t": 46.64, "stage": "check", "action": "S1_required_fields", "result": "fail", "candidate": "audit", "detail": "need exactly 2 explorations (have 1)"}
+{"t": 46.64, "stage": "check", "action": "S2_self_contained", "result": "pass", "candidate": "audit", "detail": "ok: no external resources"}
+{"t": 46.64, "stage": "check", "action": "S3_protocol_parsed", "result": "pass", "candidate": "audit", "detail": "ok"}
+{"t": 46.64, "stage": "check", "action": "X1_js_parses", "result": "pass", "candidate": "audit", "detail": "compute and render compile"}
+{"t": 46.64, "stage": "check", "action": "X2_default_run", "result": "pass", "candidate": "audit", "detail": "finite values for 6 intermediates; deterministic"}
+{"t": 46.64, "stage": "check", "action": "X3_boundaries", "result": "pass", "candidate": "audit", "detail": "9 boundary runs without NaN/Infinity/exceptions"}
+{"t": 46.64, "stage": "check", "action": "X4_controls_matter", "result": "pass", "candidate": "audit", "detail": "all 5 controls change the output"}
+{"t": 46.64, "stage": "check", "action": "X5_render_smoke", "result": "pass", "candidate": "audit", "detail": "render ok at defaults and presets"}
+{"t": 46.64, "stage": "check", "action": "X6_time_limits", "result": "pass", "candidate": "audit", "detail": "all JS evaluations under 1s"}
+{"t": 46.64, "stage": "check", "action": "C1_model_tests", "result": "pass", "candidate": "audit", "detail": "5 tests pass"}
+{"t": 46.64, "stage": "check", "action": "C2_exploration_presets", "result": "pass", "candidate": "audit", "detail": "both presets change their watched value"}
+{"t": 46.64, "stage": "check", "action": "C3_invariants", "result": "pass", "candidate": "audit", "detail": "4 invariants hold at defaults + presets"}
+{"t": 46.64, "stage": "check", "action": "C4_live_keys_resolve", "result": "pass", "candidate": "audit", "detail": "12 live keys resolve"}
+{"t": 46.64, "stage": "check", "action": "G1_grounding_honesty", "result": "pass", "candidate": "audit", "detail": "origin=file; 5 claims labelled"}
+{"t": 46.64, "stage": "check", "action": "summary", "result": "fail", "candidate": "audit", "accepted": false, "passed": 13, "failed": 1, "skipped": 0, "failing": ["S1"]}
+{"t": 46.64, "stage": "audit", "action": "fidelity", "result": "skip", "detail": "audit edit rejected (checks regressed)"}
+{"t": 46.64, "stage": "output", "action": "write_index_html", "result": "ok", "kind": "assembled", "bytes": 190053, "candidate": "repair1", "accepted": true}
+{"t": 46.64, "stage": "output", "action": "totals", "result": "pass", "totals": {"calls": 3, "prompt_tokens": 7291, "completion_tokens": 4172, "reasoning_tokens": 0, "total_tokens": 11463, "completion_charged": 4172, "elapsed_s": 46.64, "revisions": 2}, "checks": {"S1": "pass", "S2": "pass", "S3": "pass", "X1": "pass", "X2": "pass", "X3": "pass", "X4": "pass", "X5": "pass", "X6": "pass", "C1": "pass", "C2": "pass", "C3": "pass", "C4": "pass", "G1": "pass"}, "failures": [], "reason": null}
+{"t": 46.64, "stage": "end", "action": "exit", "result": "ok", "code": 0, "elapsed_s": 46.64}

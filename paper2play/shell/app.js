@@ -337,6 +337,7 @@
     els.viz.replaceChildren();
     lastWidth = els.viz.clientWidth;
     if (K && K._begin) K._begin({ width: lastWidth });
+    updateMap(r);
     if (r) {
       if (typeof render !== 'function') showError('render', new Error('render(r, p, kit, el) is not defined (the generated drawing code did not load).'));
       else if (!K) showError('render', new Error('The drawing kit did not load.'));
@@ -514,7 +515,7 @@
   function section(id, title, body) {
     var n = sections.length + 1;
     var s = h('section', { 'class': 'section', id: id, 'aria-labelledby': id + '-h' }, [
-      h('h2', { id: id + '-h' }, [h('span', { 'class': 'num', 'aria-hidden': 'true', text: String(n) }), title])
+      h('h2', { id: id + '-h' }, [h('span', { 'class': 'num', 'aria-hidden': 'true', text: (n < 10 ? '0' : '') + String(n) }), title])
     ].concat(body));
     sections.push({ id: id, title: title, el: s });
     return s;
@@ -558,7 +559,75 @@
       S.idea ? h('p', { 'class': 'lead', text: S.idea }) : h('p', { 'class': 'lead', text: 'No summary was provided.' }),
       S.why ? h('div', { 'class': 'why' }, [h('strong', { text: 'Why it matters' }), h('span', { text: S.why })]) : null
     ]);
+    var mech = buildMap();
+    if (mech) body.append(mech);
     return section('idea', 'The idea', [body]);
+  }
+
+  /* ------------------------------------------------------- mechanism map */
+  /* Optional SPEC.map = {nodes:[{id,label,key?}], edges:[{from,to,label?,sign?}]} (3-7 nodes).
+     Drawn with kit.flow; each box shows the live value of r[key] (or p[key]) and the box
+     whose key is the current exploration's `watch` is highlighted. Invalid -> nothing. */
+  var mapSpec = (function () {
+    var m = S.map;
+    if (!m || typeof m !== 'object' || !Array.isArray(m.nodes) || !Array.isArray(m.edges)) return null;
+    var seen = {}, nodes = [];
+    for (var i = 0; i < m.nodes.length; i++) {
+      var n = m.nodes[i];
+      if (!n || typeof n !== 'object' || n.id === undefined || n.id === null || str(n.id) === '' || seen[str(n.id)]) return null;
+      seen[str(n.id)] = 1;
+      nodes.push({ id: str(n.id), label: str(n.label) || str(n.id), key: n.key === undefined || n.key === null ? '' : str(n.key) });
+    }
+    if (nodes.length < 3 || nodes.length > 7) return null;
+    var edges = m.edges.filter(function (e) { return e && typeof e === 'object' && seen[str(e.from)] && seen[str(e.to)]; }).map(function (e) {
+      var sg = str(e.sign).trim();
+      return { from: str(e.from), to: str(e.to), label: str(e.label), sign: sg === '+' || sg === '-' || sg === '−' ? sg : undefined };
+    });
+    if (!edges.length) return null;
+    return { nodes: nodes, edges: edges };
+  })();
+  function buildMap() {
+    if (!mapSpec) return null;
+    els.mapBody = h('div', { 'class': 'mech-body' });
+    return h('div', { 'class': 'mech' }, [
+      h('div', { 'class': 'mech-head' }, [
+        h('h3', { text: 'How it works' }),
+        h('span', { 'class': 'mech-note', text: 'Live values · updates as you move the controls' })
+      ]),
+      els.mapBody
+    ]);
+  }
+  function mapValue(key, r) {
+    if (!key) return undefined;
+    var v = r ? getPath(r, key) : undefined;
+    var fromP = false;
+    if (v === undefined) { v = getPath(p, key); fromP = true; }
+    if (v === undefined || v === null || typeof v === 'function') return undefined;
+    if (typeof v === 'number') return isFinite(v) ? v : fmt(v, 3);
+    if (fromP && byId[key] && v === p[key]) return fmtVal(byId[key], v);
+    if (typeof v === 'boolean') return v ? 'on' : 'off';
+    if (typeof v === 'object') { var s = fmt(v, 2); return s.length > 18 ? s.slice(0, 17) + '…' : s; }
+    return str(v);
+  }
+  function updateMap(r) {
+    if (!mapSpec || !els.mapBody || !K || typeof K.flow !== 'function') return;
+    try {
+      els.mapBody.replaceChildren();
+      var d = 3, it = null;
+      K.flow(els.mapBody, {
+        title: '',
+        fmt: d,
+        nodes: mapSpec.nodes.map(function (n) {
+          it = inter.filter(function (x) { return x.key === n.key; })[0];
+          var v = mapValue(n.key, r);
+          return { id: n.id, label: n.label, value: v, unit: it && it.unit && typeof v === 'number' ? it.unit : undefined, highlight: !!(watchKey && n.key && n.key === watchKey) };
+        }),
+        edges: mapSpec.edges
+      });
+    } catch (e) {
+      els.mapBody.replaceChildren();
+      try { if (window.console) console.warn('[map]', e); } catch (x) { /* ignore */ }
+    }
   }
 
   function buildNotation() {

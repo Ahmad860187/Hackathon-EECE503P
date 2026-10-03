@@ -1573,7 +1573,10 @@ var kit = (function () {
       var tEx = titleExtra(title, W, 2, false);
       var top = (title ? 28 : 6) + tEx;
       var rowsNeeded = Math.max(nRows, auto && W >= 560 ? auto.rows : 1);
-      var H = Math.round(Math.max(clamp(W * 0.5, 220, 400), rowsNeeded * (mbh + 34) + 20)) + tEx + legendH;
+      // explicit positions get a roomy canvas; auto-layout (chains / layered maps) sizes to its rows,
+      // so a left-to-right chain is a compact band on desktop and a column on narrow screens
+      var minH = given ? clamp(W * 0.5, 220, 400) : (nRows > 1 ? 160 : 0);
+      var H = Math.round(Math.max(minH, rowsNeeded * (mbh + (nRows > 1 && !given ? 40 : 34)) + 20)) + tEx + legendH;
       var padX = mbw / 2 + 8, padY = mbh / 2 + 10;
       var areaB = H - legendH - 4;
       boxes.forEach(function (b, i) {
@@ -1637,7 +1640,9 @@ var kit = (function () {
           txt(lg, bx, by + 4.5, pz > 0 ? '+' : '−', 'k-pol-sign', { 'text-anchor': 'middle', fill: col });
         }
         var lab = e.label !== undefined && e.label !== null && str(e.label) !== '' ? str(e.label) : '';
-        if (lab && isNum(mx)) txt(lg, mx, my + 4, trunc(lab, 22), 'k-edge-label k-halo' + (hi ? ' k-accent' : ''), { 'text-anchor': 'middle' });
+        // labels on near-vertical edges sit beside the arrow instead of on top of it
+        var anc = a !== b && Math.abs(nx) > 0.8 ? (nx < 0 ? 'end' : 'start') : 'middle';
+        if (lab && isNum(mx)) txt(lg, mx, my + 4, trunc(lab, 22), 'k-edge-label k-halo' + (hi ? ' k-accent' : ''), { 'text-anchor': anc });
       });
       boxes.forEach(function (b, i) {
         var nd = b.nd;
