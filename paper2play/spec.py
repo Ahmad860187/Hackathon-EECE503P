@@ -277,7 +277,35 @@ def normalize_spec(spec: dict, case: dict, origin: str) -> tuple:
 
     s["invariants"] = _exprs("invariants", "label")
     s["tests"] = _exprs("tests", "name")
+    _snap_steps(s, notes)
     return s, notes
+
+
+def _snap_steps(s: dict, notes: list) -> None:
+    """A range/number slider can only land on min + k*step. If the default, a preset or a test value
+    is off that grid, the page would silently show and compute a different value, so refine the step."""
+    for c in s.get("controls", []):
+        if c.get("type") not in ("range", "number") or not isinstance(c.get("step"), (int, float)):
+            continue
+        vals = [c.get("default")]
+        vals += [(e.get("preset") or {}).get(c["id"]) for e in s.get("explorations", [])]
+        vals += [(t.get("params") or {}).get(c["id"]) for t in s.get("tests", [])]
+        vals = [v for v in vals if isinstance(v, (int, float)) and not isinstance(v, bool)]
+        lo, step = c.get("min", 0), c["step"]
+
+        def on_grid(st):
+            return all(abs((v - lo) / st - round((v - lo) / st)) < 1e-6 for v in vals)
+
+        orig = step
+        for _ in range(4):
+            if on_grid(step):
+                break
+            step = step / 10
+        if not on_grid(step):
+            step = (c.get("max", lo + 1) - lo) / 10000 or orig
+        if step != orig:
+            c["step"] = float(f"{step:.12g}")
+            notes.append(f"control '{c['id']}' step {orig} -> {c['step']} so its default/preset/test values are reachable")
 
 
 def default_params(spec: dict) -> dict:

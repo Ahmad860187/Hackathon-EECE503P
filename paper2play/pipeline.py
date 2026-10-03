@@ -375,7 +375,9 @@ class Run:
             return best
         if not any(c["id"] in ("C1", "C3", "C4") and c["result"] == "fail" for c in best.checks):
             return best
-        bad_t, bad_i = chk.unverified_expectations(best.spec, best.compute)
+        # Failing tests/invariants stay on the page (honest ✗): removing them could hide a real
+        # error. Only live-equation templates that reference missing keys are dropped (cosmetic).
+        bad_t, bad_i = [], []
         bad_live = [eq.get("label", "") for eq in best.spec.get("equations", [])
                     if eq.get("live") and "live equation '" + str(eq.get("label", ""))[:30] in
                     next((c["detail"] for c in best.checks if c["id"] == "C4"), "")]
