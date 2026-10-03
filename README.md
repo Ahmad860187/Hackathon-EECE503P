@@ -94,6 +94,18 @@ repairs and totals. Credentials, headers and reasoning text are never logged.
   about 11k total tokens and about 50 s per case on average, and every run within the budget. On the 15
   unseen batch-2/PaperVoyager-style cases 13/15 passed. PaperQuiz (a separate model answers 5 questions
   using only the page text) scored 24/25 across attention, SIR, Black–Scholes, Lemons and page replacement.
+
+  Final verification (OpenRouter-only network, no excerpt):
+  - 16/16 accepted on 8 cases × 2 fresh runs (9.1k tokens, 34 s average; max 71 s).
+  - Rubric re-scoring of 8 pages against the independent answer keys averaged 78.75/85.
+  - A browser sweep of 16 pages found 0 console errors, and every control and exploration worked.
+  - Linux (Python 3.11, clean `pip install -r requirements.txt`) passed the tests and an end-to-end run.
+  - Prompt injection in the excerpt or the focus was blocked.
+  - Invalid key, bad model ID, network outage and binary sources all fail cleanly, still writing the page
+    and the trace.
+  - Other OpenRouter models were also checked: mistral-small-3.2 4/4, gemini-2.5-flash-lite 2/2, and the
+    reasoning-mandatory gpt-5-nano 1/2. For models that cannot disable reasoning, the agent falls back to
+    low, then minimal, effort.
 - `scripts/eval.py` runs cases × runs into fresh directories and reports accept rate, tokens, latency
   and failing checks. `--no-excerpt` simulates OpenRouter-only network access.
 - `scripts/quiz_eval.py` measures teaching clarity: a separate model answers multiple-choice questions
