@@ -481,6 +481,22 @@ var kit = (function () {
       var xo = (o.x && typeof o.x === 'object') ? o.x : {}, yo = (o.y && typeof o.y === 'object') ? o.y : {};
       var xlog = !!xo.log, ylog = !!yo.log;
       var series = normSeries(o, xlog, ylog);
+      // Series of very different magnitude on one linear axis squash the small one flat against 0
+      // (e.g. M ~ 8000 next to n ~ 10). With all-positive data and no fixed y range, switch to log.
+      var autoLog = false;
+      if (!ylog && !(num(yo.min) > 0) && !isNum(num(yo.max)) && series.length > 1) {
+        var peaks = [], allPos = true;
+        series.forEach(function (s) {
+          var m = 0;
+          s.pts.forEach(function (p) { if (isNum(p[1])) { if (p[1] <= 0) allPos = false; m = Math.max(m, Math.abs(p[1])); } });
+          if (m > 0) peaks.push(m);
+        });
+        if (allPos && peaks.length > 1 && Math.max.apply(null, peaks) / Math.min.apply(null, peaks) >= 50) {
+          ylog = autoLog = true;
+          yo = Object.assign({}, yo, { min: undefined });   // a log axis cannot start at 0
+          series = normSeries(o, xlog, ylog);
+        }
+      }
       var mem = remember(slot('plot', o.title), series.map(function (s) { return [s.name, s.pts]; }));
       var ghost = mem.ghost ? mem.ghost.map(function (g) { return { name: g[0], pts: g[1] }; }) : [];
       var prevByName = {};
@@ -549,8 +565,9 @@ var kit = (function () {
       if (!dy.log && dy.lo < 0 && dy.hi > 0) svgEl('line', { x1: left, x2: left + pw, y1: Y(0), y2: Y(0), 'class': 'k-zero' }, g);
       if (!dx.log && dx.lo < 0 && dx.hi > 0) svgEl('line', { x1: X(0), x2: X(0), y1: top, y2: top + ph, 'class': 'k-zero' }, g);
       if (xo.label) txt(svg, left + pw / 2, H - 6, trunc(xo.label, pw / 7), 'k-axis-label', { 'text-anchor': 'middle' });
-      if (yo.label) {
-        txt(svg, 0, 0, trunc(yo.label, ph / 7), 'k-axis-label', { 'text-anchor': 'middle', transform: 'translate(' + 13 + ',' + r2(top + ph / 2) + ') rotate(-90)' });
+      if (yo.label || autoLog) {
+        var yLab = str(yo.label) + (autoLog ? (yo.label ? ' (log scale)' : 'log scale') : '');
+        txt(svg, 0, 0, trunc(yLab, ph / 7), 'k-axis-label', { 'text-anchor': 'middle', transform: 'translate(' + 13 + ',' + r2(top + ph / 2) + ') rotate(-90)' });
       }
 
       var clipId = uid('clip');
@@ -559,20 +576,47 @@ var kit = (function () {
       svgEl('rect', { x: left - 2, y: top - 2, width: pw + 4, height: ph + 4 }, cp);
       var body = svgEl('g', { 'clip-path': 'url(#' + clipId + ')' }, svg);
 
-      // reference lines
+      // reference lines (their labels are placed later, after series labels, avoiding collisions)
+      var refLabels = [];
       hlines.forEach(function (m) {
         var y = Y(num(m.y)); if (!isNum(y)) return;
         svgEl('line', { x1: left, x2: left + pw, y1: y, y2: y, 'class': 'k-ref' }, body);
-        if (m.label) txt(svg, left + pw - 4, y - 5, trunc(m.label, pw / 8), 'k-ref-label k-halo', { 'text-anchor': 'end' });
+        if (m.label) refLabels.push({ text: trunc(m.label, pw / 8), cands: [
+          [left + pw - 4, y - 5, 'end'], [left + pw - 4, y + 14, 'end'], [left + 4, y - 5, 'start'], [left + 4, y + 14, 'start'],
+          [left + pw / 2, y - 5, 'middle'], [left + pw / 2, y + 14, 'middle']] });
       });
       vlines.forEach(function (m) {
         var x = X(num(m.x)); if (!isNum(x)) return;
         svgEl('line', { x1: x, x2: x, y1: top, y2: top + ph, 'class': 'k-ref' }, body);
         if (m.label) {
-          var rightSide = x < left + pw * 0.66;
-          txt(svg, x + (rightSide ? 5 : -5), top + 14, trunc(m.label, pw / 9), 'k-ref-label k-halo', { 'text-anchor': rightSide ? 'start' : 'end' });
+          var rightSide = x < left + pw * 0.66, a = rightSide ? 'start' : 'end', dx5 = rightSide ? 5 : -5;
+          refLabels.push({ text: trunc(m.label, pw / 9), cands: [
+            [x + dx5, top + 14, a], [x - dx5, top + 14, rightSide ? 'end' : 'start'], [x + dx5, top + ph - 6, a],
+            [x - dx5, top + ph - 6, rightSide ? 'end' : 'start'], [x + dx5, top + ph / 2, a]] });
         }
       });
+      // occupied label boxes [x0, y0, x1, y1]; text baseline at y, ~12px tall.
+      // The title row and the tick-label bands are occupied from the start.
+      var boxes = [[0, 0, W, top - 2], [left - 2, top + ph + 3, left + pw + 2, top + ph + 21], [0, top - 6, left - 2, top + ph + 6]];
+      var boxOf = function (x, y, w, anchor) {
+        var x0 = anchor === 'end' ? x - w : anchor === 'middle' ? x - w / 2 : x;
+        return [x0 - 2, y - 12, x0 + w + 2, y + 4];
+      };
+      var hits = function (b) {
+        if (b[0] < 0 || b[2] > W || b[1] < 0 || b[3] > H) return true;
+        return boxes.some(function (o2) { return b[0] < o2[2] && b[2] > o2[0] && b[1] < o2[3] && b[3] > o2[1]; });
+      };
+      var placeLabel = function (text, cands, cls, extra) {
+        var w = tw(text);
+        for (var i = 0; i < cands.length; i++) {
+          var b = boxOf(cands[i][0], cands[i][1], w, cands[i][2]);
+          if (!hits(b)) {
+            boxes.push(b);
+            return txt(svg, cands[i][0], cands[i][1], text, cls, Object.assign({ 'text-anchor': cands[i][2] }, extra || {}));
+          }
+        }
+        return null;   // nowhere free: caller keeps the text as a tooltip instead of overlapping
+      };
 
       var anyHi = series.some(function (s) { return s.highlight; });
       var baseY = dy.log ? top + ph : Y(clamp(0, dy.lo, dy.hi));
@@ -628,12 +672,32 @@ var kit = (function () {
       var atEnd = function (l) { return lastFinite(l.s.pts)[0] >= xEnd - 0.08 * xSpan; };
       var outside = labs.filter(atEnd);
       var inside = labs.filter(function (l) { return !atEnd(l); });
-      declutter(outside, 15, top + 4, top + ph);
+      // long names wrap onto two lines (never cut mid-formula) at a space or operator near the middle
+      var wrap2 = function (name, n) {
+        if (name.length <= n) return [name];
+        var depth = [], d = 0;
+        for (var j = 0; j < name.length; j++) { var ch = name.charAt(j); if (ch === '(' || ch === '[') d++; depth.push(d); if (ch === ')' || ch === ']') d = Math.max(0, d - 1); }
+        var find = function (chars) {
+          for (var i = Math.min(n, name.length - 1); i > n / 3; i--) { if (depth[i] === 0 && chars.indexOf(name.charAt(i)) >= 0) return i; }
+          return -1;
+        };
+        var cut = find(' ');
+        if (cut < 0) cut = find('=·+−-,/');
+        if (cut < 0) cut = n;
+        var a = name.slice(0, cut + (name.charAt(cut) === ' ' ? 0 : 1)).trim(), b = name.slice(cut + (name.charAt(cut) === ' ' ? 1 : 1)).trim();
+        return [a, trunc(b, n)];
+      };
+      var wrapsAny = outside.some(function (l) { return l.s.name.length > labChars; });
+      declutter(outside, wrapsAny ? 31 : 17, top + 4, top + ph);
       outside.forEach(function (l) {
         var c = colOf(l.s);
         if (Math.abs(l.ly - l.y) > 5) svgEl('line', { x1: l.x + 2, y1: l.y, x2: left + pw + 4, y2: l.ly, stroke: c, 'class': 'k-leader' }, svg);
-        var t = txt(svg, left + pw + 6, l.ly + 4, trunc(l.s.name, labChars), 'k-series-label' + (l.s.highlight ? ' k-strong' : ''), { fill: c });
-        if (l.s.name.length > labChars) svgEl('title', { text: l.s.name }, t);
+        var lines = wrap2(l.s.name, labChars);
+        lines.forEach(function (ln, k) {
+          var t = txt(svg, left + pw + 6, l.ly + 4 + k * 13, ln, 'k-series-label' + (l.s.highlight ? ' k-strong' : ''), { fill: c });
+          if (k === lines.length - 1 && lines.join(' ').length < l.s.name.length) svgEl('title', { text: l.s.name }, t);
+          boxes.push(boxOf(left + pw + 6, l.ly + 4 + k * 13, tw(ln), 'start'));
+        });
       });
       declutter(inside, 15, top + 10, top + ph - 4);
       inside.forEach(function (l) {
@@ -641,6 +705,7 @@ var kit = (function () {
         if (Math.abs(l.ly - l.y) > 5) svgEl('line', { x1: l.x + 2, y1: l.y, x2: l.x + 6, y2: l.ly, stroke: c, 'class': 'k-leader' }, svg);
         var nm = trunc(l.s.name, 16), flip = l.x + 7 + tw(nm) > W - 2;
         txt(svg, flip ? l.x - 7 : l.x + 7, l.ly + 4, nm, 'k-series-label k-halo' + (l.s.highlight ? ' k-strong' : ''), { fill: c, 'text-anchor': flip ? 'end' : null });
+        boxes.push(boxOf(flip ? l.x - 7 : l.x + 7, l.ly + 4, tw(nm), flip ? 'end' : 'start'));
       });
 
       // markers
@@ -648,13 +713,20 @@ var kit = (function () {
         var mx = X(num(m.x)), my = Y(num(m.y));
         if (!isNum(mx) || !isNum(my)) return;
         var hi = !!m.highlight || isWatched(m.label);
-        svgEl('circle', { cx: mx, cy: my, r: hi ? 6 : 5, fill: hi ? 'var(--accent)' : 'var(--text)', 'class': 'k-marker' }, svg);
+        var dot = svgEl('circle', { cx: mx, cy: my, r: hi ? 6 : 5, fill: hi ? 'var(--accent)' : 'var(--text)', 'class': 'k-marker' }, svg);
+        boxes.push([mx - 7, my - 7, mx + 7, my + 7]);
         if (m.label) {
-          var lab = trunc(m.label, 26), lw = tw(lab);
-          var toLeft = mx + 8 + lw > W - 2;
-          var ly = my - 9 < top + 10 ? my + 18 : my - 9;
-          txt(svg, toLeft ? mx - 8 : mx + 8, ly, lab, 'k-marker-label k-halo' + (hi ? ' k-accent' : ''), { 'text-anchor': toLeft ? 'end' : 'start' });
+          var lab = trunc(m.label, 26);
+          // try positions around the marker; keep the label inside the plot area and off other labels
+          var placed = placeLabel(lab, [
+            [mx - 9, my - 9, 'end'], [mx + 9, my - 9, 'start'], [mx - 9, my + 18, 'end'], [mx + 9, my + 18, 'start'],
+            [mx, my - 13, 'middle'], [mx, my + 22, 'middle'], [mx - 9, my - 24, 'end'], [mx - 9, my + 32, 'end']],
+            'k-marker-label k-halo' + (hi ? ' k-accent' : ''));
+          if (!placed) svgEl('title', { text: m.label }, dot);   // no free spot: hover tooltip, never overlap
         }
+      });
+      refLabels.forEach(function (r) {
+        placeLabel(r.text, r.cands, 'k-ref-label k-halo');
       });
 
       if (o.note) note(el, o.note);
