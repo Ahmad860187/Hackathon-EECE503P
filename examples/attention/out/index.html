@@ -41,6 +41,9 @@
   --c6: #8a6a3b;
   --c7: #4c51bf;
   --shadow: 0 1px 2px rgba(20, 24, 28, 0.05), 0 2px 10px rgba(20, 24, 28, 0.04);
+  --shadow-raised: 0 1px 2px rgba(20, 24, 28, 0.06), 0 6px 24px -4px rgba(20, 24, 28, 0.10);
+  --edge: rgba(20, 24, 28, 0.10);
+  --bar-h: 50px;
   --on-l: #ffffff; --on-d: #1d2125; --halo-cell: rgba(255, 255, 255, 0.45); --halo-on-d: rgba(255, 255, 255, 0.45); --halo-on-l: rgba(8, 16, 32, 0.3);
   --radius: 12px;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -57,6 +60,7 @@
     --ok: #6cd39a; --ok-soft: rgba(108, 211, 154, 0.13); --bad: #ff8a80; --bad-soft: rgba(255, 138, 128, 0.13); --link: #7db4ff;
     --c0: #5ea1ff; --c1: #4fd1c5; --c2: #a78bfa; --c3: #9ccc65; --c4: #f06fb3; --c5: #9fb3c8; --c6: #d4b483; --c7: #8c9eff;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-raised: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 28px -6px rgba(0, 0, 0, 0.55); --edge: rgba(0, 0, 0, 0.45);
     --on-l: #0c1118; --on-d: #0c1118; --halo-cell: rgba(0, 0, 0, 0.42); --halo-on-d: rgba(255, 255, 255, 0.32); --halo-on-l: rgba(255, 255, 255, 0.32);
   }
 }
@@ -68,6 +72,7 @@
   --ok: #6cd39a; --ok-soft: rgba(108, 211, 154, 0.13); --bad: #ff8a80; --bad-soft: rgba(255, 138, 128, 0.13); --link: #7db4ff;
   --c0: #5ea1ff; --c1: #4fd1c5; --c2: #a78bfa; --c3: #9ccc65; --c4: #f06fb3; --c5: #9fb3c8; --c6: #d4b483; --c7: #8c9eff;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-raised: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 28px -6px rgba(0, 0, 0, 0.55); --edge: rgba(0, 0, 0, 0.45);
   --on-l: #0c1118; --on-d: #0c1118; --halo-cell: rgba(0, 0, 0, 0.42); --halo-on-d: rgba(255, 255, 255, 0.32); --halo-on-l: rgba(255, 255, 255, 0.32);
 }
 
@@ -79,9 +84,10 @@ body {
 }
 a { color: var(--link); overflow-wrap: anywhere; }
 h1, h2, h3 { font-family: var(--serif); line-height: 1.25; margin: 0 0 0.5em; font-weight: 600; text-wrap: balance; }
-h1 { font-size: clamp(1.6rem, 4.2vw, 2.35rem); letter-spacing: -0.01em; }
-h2 { font-size: 1.4rem; }
-h3 { font-size: 1.1rem; }
+/* size-specific tracking: large display type tightens, text sizes stay near 0 */
+h1 { font-size: clamp(1.7rem, 4.4vw, 2.5rem); line-height: 1.12; letter-spacing: -0.022em; font-weight: 700; }
+h2 { font-size: 1.45rem; line-height: 1.22; letter-spacing: -0.012em; }
+h3 { font-size: 1.1rem; line-height: 1.3; letter-spacing: -0.004em; }
 p { margin: 0 0 0.75em; text-wrap: pretty; }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--c0); outline-offset: 2px; }
@@ -90,19 +96,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
 
 /* header */
-.site-head { padding-top: 28px; padding-bottom: 8px; }
+.site-head { padding-top: 32px; padding-bottom: 6px; }
 .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
 .cite-line { color: var(--muted); font-size: 0.98rem; margin-bottom: 0; }
 .cite-line em { font-style: italic; }
-.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 4px; padding: 0; list-style: none; }
-.toc a { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; color: var(--text); font-size: 0.88rem; background: var(--card); }
+.toc-bar { position: sticky; top: 0; z-index: 30; margin-top: 10px; background: color-mix(in srgb, var(--bg) 84%, transparent); -webkit-backdrop-filter: saturate(1.6) blur(10px); backdrop-filter: saturate(1.6) blur(10px); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .toc-bar { background: var(--bg); } }
+/* soft scroll-edge shadow instead of a hard divider; only once content passes beneath */
+.toc-bar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; pointer-events: none; background: linear-gradient(var(--edge), transparent); opacity: 0; transition: opacity 200ms ease-out; }
+.toc-bar.stuck::after { opacity: 1; }
+.toc { display: flex; flex-wrap: nowrap; gap: 6px; margin: 0; padding: 8px 0; list-style: none; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.toc::-webkit-scrollbar { display: none; }
+.toc li { flex: none; }
+.toc a { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; color: var(--text); font-size: 0.88rem; background: var(--card); white-space: nowrap; transition-property: transform, border-color, box-shadow; transition-duration: 160ms; transition-timing-function: ease-out; }
 .toc a:hover { border-color: var(--c0); }
-.theme-btn { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 4px 12px; min-height: 30px; font-size: 0.78rem; cursor: pointer; letter-spacing: 0.02em; text-transform: none; color: var(--muted); }
+.toc a.cur { border-color: var(--c0); box-shadow: inset 0 0 0 1px var(--c0); font-weight: 600; }
+.theme-btn { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 4px 12px; min-height: 30px; font-size: 0.78rem; cursor: pointer; letter-spacing: 0.02em; text-transform: none; color: var(--muted); transition: transform 160ms ease-out; }
 
 /* sections */
-.section { margin: 30px 0; scroll-margin-top: 12px; }
+.section { margin: 34px 0; scroll-margin-top: calc(var(--bar-h) + 10px); }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; min-width: 0; }
-.section > h2 { display: flex; align-items: baseline; gap: 10px; }
+.section > h2 { display: flex; align-items: baseline; gap: 10px; margin-bottom: 0.6em; }
 .section > h2 .num { font-family: var(--sans); font-size: 0.8rem; color: var(--muted); font-weight: 600; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
 .lead { font-size: 1.08rem; }
 .why { border-left: 3px solid var(--c0); padding: 2px 0 2px 12px; color: var(--text); margin-top: 10px; }
@@ -130,11 +144,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (min-width: 900px) { .play { grid-template-columns: minmax(0, 1fr) minmax(290px, 340px); } }
 @media (min-width: 900px) and (min-height: 560px) {
   /* controls + live values stay in view while the learner scans a tall visual */
-  .side { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-bottom: 2px; }
+  .side { position: sticky; top: calc(var(--bar-h) + 12px); max-height: calc(100vh - var(--bar-h) - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-bottom: 2px; }
 }
-.viz-card { position: relative; scroll-margin-top: 12px; }
+.viz-card { position: relative; scroll-margin-top: calc(var(--bar-h) + 10px); box-shadow: var(--shadow-raised); }
 .viz-card.pulse { animation: pulse 1.6s ease-out; }
-@keyframes pulse { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); border-color: var(--accent); } 100% { box-shadow: 0 0 0 14px transparent, var(--shadow); } }
+@keyframes pulse { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-raised); border-color: var(--accent); } 100% { box-shadow: 0 0 0 14px transparent, var(--shadow-raised); } }
 .establish { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--grid); }
 .establish .caption { font-weight: 600; margin: 0 0 4px; font-size: 1.06rem; line-height: 1.4; }
 .establish .howto { color: var(--muted); font-size: 0.93rem; margin: 0 0 2px; }
@@ -162,7 +176,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* buttons */
 .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card); padding: 7px 15px; min-height: 38px; border-radius: 8px; cursor: pointer; font-size: 0.92rem; font-weight: 500; transition-property: transform, background-color, border-color, filter; transition-duration: 150ms; transition-timing-function: ease-out; }
 .btn:hover { border-color: var(--c0); }
-.btn:active { transform: scale(0.97); }
+.btn, .kit-btn, .theme-btn, .toc a { touch-action: manipulation; }
+/* feedback on pointer-down is instant; only the release eases back */
+.btn:active, .kit-btn:active, .theme-btn:active, .toc a:active { transform: scale(0.97); transition-duration: 0s; }
 .btn-primary.done { background: var(--ok); border-color: var(--ok); }
 .btn-primary { background: var(--c0); border-color: var(--c0); color: #fff; }
 :root[data-theme="dark"] .btn-primary { color: #0c1118; }
@@ -215,7 +231,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .explore-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 @media (min-width: 860px) { .explore-grid { grid-template-columns: 1fr 1fr; } }
 .ex { display: flex; flex-direction: column; gap: 10px; border-top: 3px solid var(--c0); }
-.ex.active { border-top-color: var(--accent); }
+.ex.active { border-top-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow-raised); }
 .ex .ex-num { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
 .ex h3 { margin: 0; }
 .ex .predict { background: var(--surface2); border-radius: 8px; padding: 10px 12px; margin: 0; }
@@ -225,7 +241,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ex .preset { font-size: 0.85rem; color: var(--muted); margin: 0; }
 .ex .preset code { font-family: var(--mono); color: var(--text); background: var(--surface2); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
 .ex .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.ex .status { font-size: 0.88rem; color: var(--accent); margin: 0; min-height: 0; }
+.ex .status { font-size: 0.88rem; color: var(--text); margin: 0; min-height: 0; }
+.ex .status:not(:empty) { padding: 6px 10px; border-radius: 8px; background: var(--accent-soft); border-left: 3px solid var(--accent); }
 .ex .reveal { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; }
 .ex .reveal[hidden] { display: none; }
 .ex .reveal p b { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
@@ -350,7 +367,7 @@ details.built dd { margin: 0; overflow-wrap: anywhere; }
 .kit-callout-key::before { content: "\2192"; color: var(--accent); }
 .kit-timeline { display: flex; flex-direction: column; gap: 10px; }
 .kit-tl-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); }
-.kit-btn { border: 1px solid var(--border); background: var(--card); border-radius: 7px; padding: 4px 10px; cursor: pointer; font-size: 0.9rem; min-width: 2.4em; line-height: 1.4; }
+.kit-btn { border: 1px solid var(--border); background: var(--card); border-radius: 7px; padding: 4px 10px; cursor: pointer; font-size: 0.9rem; min-width: 2.4em; line-height: 1.4; transition: transform 150ms ease-out, border-color 150ms ease-out; }
 .kit-btn:hover { border-color: var(--c0); }
 .kit-btn-play { font-weight: 600; min-width: 5.6em; }
 .kit-tl-scrub { flex: 1 1 120px; min-width: 100px; accent-color: var(--c0); }
@@ -372,13 +389,20 @@ details.built dd { margin: 0; overflow-wrap: anywhere; }
   .eq-expr { font-size: 1.02rem; }
   .vals td.v { max-width: 10em; }
 }
+@media (prefers-reduced-transparency: reduce) {
+  .toc-bar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  :root:root:root { --border: color-mix(in srgb, var(--text) 55%, var(--bg)); --grid: color-mix(in srgb, var(--text) 30%, var(--bg)); }
+  .toc-bar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid var(--border); }
+}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
   .viz-card.pulse { animation: none; }
 }
 @media print {
-  .toc, .theme-btn, .ex .actions, .kit-tl-bar { display: none; }
+  .toc-bar, .theme-btn, .ex .actions, .kit-tl-bar { display: none; }
   .card { box-shadow: none; }
 }
 
@@ -387,8 +411,8 @@ details.built dd { margin: 0; overflow-wrap: anywhere; }
 <body>
 <div id="app"><noscript><p style="padding:16px">This interactive page needs JavaScript enabled. Everything runs locally; nothing is downloaded.</p></noscript></div>
 <script>
-const SPEC = {"title":"Scaled Dot-Product Attention, by hand","paper":{"title":"Attention Is All You Need","authors":"Vaswani et al.","year":"2017","url":"https://arxiv.org/html/1706.03762v7","section":"3.2.1"},"idea":"Attention lets each query look at every key, score how similar they are with a dot product, turn those scores into weights that sum to 1 with a softmax, and then output a weighted average of the value vectors. The only twist in the paper is dividing the scores by sqrt(d_k) before the softmax, so that large key dimensions do not saturate the softmax. Here you edit tiny Q, K and V matrices and watch scores, weights and output change.","why":"The scaling factor looks like a cosmetic detail, but it decides whether the softmax stays soft (many keys get weight) or collapses onto one key (one-hot weights, near-zero gradients). Seeing that collapse in a 3x3 example is the whole point of Section 3.2.1.","symbols":[{"sym":"Q","meaning":"query matrix, one row per query, d_k columns"},{"sym":"K","meaning":"key matrix, one row per key, d_k columns"},{"sym":"V","meaning":"value matrix, one row per key, d_v columns"},{"sym":"d_k","meaning":"number of columns of Q and K (the key/query dimension)"},{"sym":"d_v","meaning":"number of columns of V (the value dimension)"},{"sym":"S","meaning":"raw score matrix Q K^T, entry S[i][j] = q_i . k_j"},{"sym":"A","meaning":"attention weight matrix, softmax of S/sqrt(d_k) along each row"},{"sym":"O","meaning":"output matrix A V, one row per query"}],"equations":[{"label":"Scores","expr":"S = Q Kᵀ,  S[i][j] = qᵢ · kⱼ","live":"S[0][0] = {S00}","support":"excerpt"},{"label":"Scaling","expr":"S̃ = S / √d_k   (d_k = {dk})","live":"1/√d_k = {invSqrtDk}","support":"excerpt"},{"label":"Weights","expr":"A = softmax(S̃) row by row","live":"row 0 sums to {rowSum0}","support":"excerpt"},{"label":"Output","expr":"O = A V","live":"O[0][0] = {O00}","support":"excerpt"},{"label":"Attention (Eq. 1)","expr":"Attention(Q,K,V) = softmax(Q Kᵀ / √d_k) V","live":"max weight = {maxWeight}","support":"excerpt"},{"label":"Score variance (Footnote 4)","expr":"Var(q·k) = d_k when q,k entries are iid mean 0, variance 1","live":"d_k = {dk}, so unscaled scores have std ≈ {scoreStd}","support":"excerpt"}],"controls":[{"id":"Q","label":"Query matrix Q (rows = queries, cols = d_k)","type":"matrix","rows":3,"cols":3,"default":[[1,0,1],[0,1,1],[1,1,0]],"min":-3,"max":3,"step":0.5,"help":"Each row is one query vector q_i. Edit any cell."},{"id":"K","label":"Key matrix K (rows = keys, cols = d_k)","type":"matrix","rows":3,"cols":3,"default":[[1,1,0],[0,1,1],[1,0,1]],"min":-3,"max":3,"step":0.5,"help":"Each row is one key vector k_j. Row j of K pairs with row j of V."},{"id":"V","label":"Value matrix V (rows = keys, cols = d_v)","type":"matrix","rows":3,"cols":3,"default":[[1,0,0],[0,1,0],[0,0,1]],"min":-3,"max":3,"step":0.5,"help":"Each row is the value vector v_j that key j carries. The output is a weighted average of these rows."},{"id":"scale","label":"Divide scores by sqrt(d_k)","type":"toggle","default":true,"help":"On = the paper's scaled dot-product attention. Off = plain dot-product attention."},{"id":"temperature","label":"Extra softmax temperature T","type":"range","min":0.25,"max":4,"step":0.25,"default":1,"help":"Multiplies the logits before softmax. T<1 sharpens weights, T>1 flattens them. T=1 is the paper's setting."}],"intermediates":[{"key":"S","label":"Raw scores S = Q Kᵀ","fmt":3},{"key":"logits","label":"Logits fed to softmax (scaled, /T)","fmt":3},{"key":"A","label":"Attention weights A (rows sum to 1)","fmt":3},{"key":"O","label":"Output O = A V","fmt":3},{"key":"maxWeight","label":"Largest weight in A","fmt":3},{"key":"rowSum0","label":"Sum of weight row 0","fmt":3}],"visual":{"caption":"Left: the score matrix S = Q Kᵀ (raw similarity of every query to every key). Middle: the weight matrix A after scaling and softmax, each row summing to 1. Right: the output O = A V, the weighted average of the value rows.","how_to_read":"Rows are queries, columns are keys (or value dimensions on the right). Darker cells mean larger magnitude; the outlined cell is the largest weight in A. Compare the middle panel with scaling on and off: with scaling off the same scores produce a much more peaked row."},"explorations":[{"title":"Equal scores: a uniform attention row","predict":"If every key is identical, what should the attention weights look like?","preset":{"K":[[1,1,1],[1,1,1],[1,1,1]],"Q":[[1,1,1],[1,1,1],[1,1,1]]},"watch":"A","observe":"Every entry of A becomes exactly 1/3 = 0.333, so each row sums to 1 and the output O is the plain average of the three value rows, (1/3, 1/3, 1/3) per column.","why":"Identical keys give identical dot products with a given query, so the softmax of a constant vector is the uniform distribution. Attention degenerates to averaging — the softmax has no preference to express."},{"title":"Dominant score: scaling keeps the softmax alive","predict":"Make query 0 point strongly at key 0. With scaling off, how concentrated do the weights get compared with scaling on?","preset":{"Q":[[3,3,3],[0,1,1],[1,1,0]],"K":[[3,3,3],[0,1,1],[1,0,1]],"scale":false},"watch":"maxWeight","observe":"With scaling off, S[0][0] = 27 while S[0][1] = S[0][2] = 6, so the softmax is dominated by key 0: maxWeight is about 1.000 (the other two weights are ~1e-9). Flip scaling on and maxWeight drops to roughly 0.98 with the other keys still visible.","why":"Footnote 4: for iid mean-0 variance-1 entries the dot product has variance d_k, so its magnitude grows like sqrt(d_k). Large logits push the softmax into its saturated region where one weight is ~1 and the gradient is ~0 — exactly the pathology the 1/sqrt(d_k) factor removes."}],"limitation":{"kind":"misconception","text":"Scaling is not a normalisation that makes the weights uniform — it only rescales the logits. With d_k = 3 the factor 1/sqrt(3) ≈ 0.577 is mild, so on small examples scaling on and off can look almost identical; the difference only becomes dramatic for large d_k or large entries. A second caveat: this toy has no learned projections, so Q, K and V are just numbers you type, not the outputs of W^Q, W^K, W^V."},"claims":[{"text":"For each query the dot products with all keys are computed, each is divided by sqrt(d_k), and a softmax is applied to obtain the weights on the values.","support":"excerpt"},{"text":"The output is Attention(Q, K, V) = softmax(Q Kᵀ / sqrt(d_k)) V.","support":"excerpt"},{"text":"Dot-product attention is identical to this algorithm except for the scaling factor 1/sqrt(d_k).","support":"excerpt"},{"text":"For large d_k the dot products grow large in magnitude, pushing the softmax into regions with extremely small gradients; scaling counteracts this.","support":"excerpt"},{"text":"If q and k have iid mean-0 variance-1 components, then q·k has mean 0 and variance d_k.","support":"excerpt"},{"text":"The softmax of a constant vector is the uniform distribution, so identical keys give equal weights.","support":"illustration"},{"text":"The output row is a convex combination of the value rows, so it always lies inside their convex hull.","support":"illustration"}],"invariants":[{"label":"Every attention row sums to 1","expr":"r.A.every(row => Math.abs(row.reduce((a,b)=>a+b,0) - 1) < 1e-9)"},{"label":"All weights are in [0,1]","expr":"r.A.every(row => row.every(w => w >= -1e-12 && w <= 1 + 1e-12))"},{"label":"Output is the weighted sum of V rows","expr":"r.O.every((row,i) => row.every((val,c) => Math.abs(val - r.A[i].reduce((s,w,j)=>s+w*p.V[j][c],0)) < 1e-9))"},{"label":"Raw scores are Q Kᵀ","expr":"r.S.every((row,i) => row.every((val,j) => Math.abs(val - p.Q[i].reduce((s,q,c)=>s+q*p.K[j][c],0)) < 1e-9))"}],"tests":[{"name":"Identical keys and queries give uniform weights 1/3","params":{"Q":[[1,1,1],[1,1,1],[1,1,1]],"K":[[1,1,1],[1,1,1],[1,1,1]],"V":[[1,0,0],[0,1,0],[0,0,1]],"scale":true,"temperature":1},"expr":"Math.abs(r.A[0][0]-1/3)<1e-9 && Math.abs(r.A[0][1]-1/3)<1e-9 && Math.abs(r.A[0][2]-1/3)<1e-9"},{"name":"Uniform weights make the output the mean of the value rows","params":{"Q":[[1,1,1],[1,1,1],[1,1,1]],"K":[[1,1,1],[1,1,1],[1,1,1]],"V":[[1,0,0],[0,1,0],[0,0,1]],"scale":true,"temperature":1},"expr":"Math.abs(r.O[0][0]-1/3)<1e-9 && Math.abs(r.O[0][1]-1/3)<1e-9 && Math.abs(r.O[0][2]-1/3)<1e-9"},{"name":"Scaling off: S[0][0] = 27 for the dominant-score preset","params":{"Q":[[3,3,3],[0,1,1],[1,1,0]],"K":[[3,3,3],[0,1,1],[1,0,1]],"V":[[1,0,0],[0,1,0],[0,0,1]],"scale":false,"temperature":1},"expr":"Math.abs(r.S[0][0]-27)<1e-9 && r.maxWeight>0.999"},{"name":"Scaling on: same preset, maxWeight drops below 0.99","params":{"Q":[[3,3,3],[0,1,1],[1,1,0]],"K":[[3,3,3],[0,1,1],[1,0,1]],"V":[[1,0,0],[0,1,0],[0,0,1]],"scale":true,"temperature":1},"expr":"r.maxWeight<0.99 && r.maxWeight>0.9"}]};
-const BUILD = {"source_origin":"file","model":"deepseek/deepseek-v4.1-flash","checks":[{"id":"S1","name":"required_fields","result":"pass","detail":"ok"},{"id":"S2","name":"self_contained","result":"pass","detail":"ok: no external resources"},{"id":"S3","name":"protocol_parsed","result":"pass","detail":"ok (SPEC JSON repaired (comments/trailing commas/truncation))"},{"id":"X1","name":"js_parses","result":"pass","detail":"compute and render compile"},{"id":"X2","name":"default_run","result":"pass","detail":"finite values for 6 intermediates; deterministic"},{"id":"X3","name":"boundaries","result":"pass","detail":"9 boundary runs without NaN/Infinity/exceptions"},{"id":"X4","name":"controls_matter","result":"pass","detail":"all 5 controls change the output"},{"id":"X5","name":"render_smoke","result":"pass","detail":"render ok at defaults and presets"},{"id":"X6","name":"time_limits","result":"pass","detail":"all JS evaluations under 1s"},{"id":"C1","name":"model_tests","result":"fail","detail":"'Scaling on: same preset, maxWeight drops below 0.99' is false: r.maxWeight<0.99 && r.maxWeight>0.9"},{"id":"C2","name":"exploration_presets","result":"pass","detail":"both presets change their watched value"},{"id":"C3","name":"invariants","result":"pass","detail":"4 invariants hold at defaults + presets"},{"id":"C4","name":"live_keys_resolve","result":"pass","detail":"13 live keys resolve"},{"id":"G1","name":"grounding_honesty","result":"pass","detail":"origin=file; 7 claims labelled"}],"generated_at":"2026-10-03T11:30:48Z"};
+const SPEC = {"title":"Scaled Dot-Product Attention, by hand","paper":{"title":"Attention Is All You Need","authors":"Vaswani et al.","year":"2017","url":"https://arxiv.org/html/1706.03762v7","section":"3.2.1"},"idea":"Each query row of Q is compared with every key row of K by a dot product, giving a similarity score. Scores are divided by sqrt(d_k) (the scaling), then softmax turns each query's row of scores into weights that sum to 1. The output row is the weighted average of the value rows V, so a query copies mostly from the values whose keys it matched.","why":"This is the single operation a Transformer repeats everywhere; seeing scores -> weights -> weighted sum on 3x3 matrices makes the whole architecture readable.","symbols":[{"sym":"Q","meaning":"queries: one row per query, d_k columns"},{"sym":"K","meaning":"keys: one row per key, d_k columns"},{"sym":"V","meaning":"values: one row per key, d_v columns"},{"sym":"d_k","meaning":"number of columns of Q and K (the key/query dimension)"},{"sym":"d_v","meaning":"number of columns of V (the value dimension)"},{"sym":"S","meaning":"raw score matrix Q K^T, entry S[i][j] = q_i . k_j"},{"sym":"A","meaning":"attention weights: softmax of S/sqrt(d_k), each row sums to 1"},{"sym":"O","meaning":"output = A V, one row per query"}],"equations":[{"label":"Scores","expr":"S = Q Kᵀ","live":"S[0][0] = {s00}","support":"excerpt"},{"label":"Scaling","expr":"S̃ = S / √d_k","live":"1/√d_k = {invSqrtDk}","support":"excerpt"},{"label":"Attention (Eq. 1)","expr":"Attention(Q,K,V) = softmax(Q Kᵀ / √d_k) V","live":"row 0 weight sum = {rowSum0}","support":"excerpt"},{"label":"Output","expr":"O = A V","live":"O[0][0] = {o00}","support":"excerpt"},{"label":"Score variance","expr":"Var(q·k) = d_k for unit-variance q,k","live":"d_k = {dk}","support":"excerpt"}],"controls":[{"id":"Q","label":"Q (queries, 3×2)","type":"matrix","rows":3,"cols":2,"default":[[1,0],[0,1],[1,1]],"min":-3,"max":3,"step":0.5,"help":"Row i is query i. Each row has d_k = 2 numbers."},{"id":"K","label":"K (keys, 3×2)","type":"matrix","rows":3,"cols":2,"default":[[1,0],[0,1],[1,1]],"min":-3,"max":3,"step":0.5,"help":"Row j is key j. Same number of columns as Q."},{"id":"V","label":"V (values, 3×2)","type":"matrix","rows":3,"cols":2,"default":[[1,0],[0,1],[1,1]],"min":-3,"max":3,"step":0.5,"help":"Row j is the value that key j points to. Output rows are averages of these."},{"id":"scaled","label":"Divide scores by √d_k","type":"toggle","default":true,"help":"Off = plain dot-product attention; on = scaled dot-product attention (Eq. 1)."},{"id":"temperature","label":"Extra score multiplier 1/T","type":"range","min":0.25,"max":4,"step":0.25,"default":1,"help":"T > 1 flattens the weights, T < 1 sharpens them. T = 1 is the paper's setting."}],"intermediates":[{"key":"s00","label":"raw score S[0][0] = q₀·k₀","fmt":3},{"key":"invSqrtDk","label":"scaling factor 1/√d_k","fmt":3},{"key":"rowSum0","label":"sum of weight row 0","fmt":4},{"key":"maxWeight0","label":"largest weight in row 0","fmt":3},{"key":"o00","label":"output O[0][0]","fmt":3},{"key":"entropy0","label":"row-0 weight entropy (nats)","fmt":3}],"visual":{"caption":"Left: the 3×3 score matrix S = Q Kᵀ. Middle: the weight matrix A after scaling and softmax. Right: the output O = A V next to the value rows V it averages.","how_to_read":"Rows are queries, columns are keys. In the middle panel each row is a probability distribution over the three keys; the outlined cell is the largest weight in row 0. The right panel shows that every output row is a blend of the three V rows."},"limitation":{"kind":"misconception","text":"Attention is not a lookup table that returns one value: even a nearly one-hot weight row is a weighted average, and with equal keys the output is the mean of all values. Also, this toy has no learned projections — real Transformers compute Q, K, V as linear maps of the input, which is where the parameters live."},"claims":[{"text":"Scores are dot products of each query with all keys, divided by sqrt(d_k), then softmaxed to weight the values.","support":"excerpt"},{"text":"Attention(Q,K,V) = softmax(Q Kᵀ/√d_k) V.","support":"excerpt"},{"text":"Unscaled dot-product attention is identical except for the 1/√d_k factor.","support":"excerpt"},{"text":"For unit-variance q and k, q·k has mean 0 and variance d_k.","support":"excerpt"},{"text":"For large d_k the dot products grow large, pushing softmax into regions with extremely small gradients.","support":"excerpt"},{"text":"The 3×3 matrices and the entropy numbers here are a teaching toy, not the paper's experiments.","support":"illustration"}],"invariants":[{"label":"every weight row sums to 1","expr":"r.A.every(row => Math.abs(row.reduce((a,b)=>a+b,0) - 1) < 1e-9)"},{"label":"all weights are in [0,1]","expr":"r.A.every(row => row.every(w => w >= 0 && w <= 1))"},{"label":"output equals A times V","expr":"r.O.every((row,i) => row.every((v,c) => Math.abs(v - r.A[i].reduce((s,w,j)=>s+w*r.V[j][c],0)) < 1e-9))"},{"label":"scaling off means the score matrix is used raw","expr":"p.scaled ? true : r.S.every((row,i)=>row.every((v,j)=>Math.abs(v - r.Sraw[i][j]) < 1e-9))"}],"tests":[{"name":"identical keys give uniform weights 1/3","params":{"K":[[1,0],[1,0],[1,0]],"scaled":true,"temperature":1},"expr":"Math.abs(r.A[0][0]-1/3)<1e-6 && Math.abs(r.A[0][1]-1/3)<1e-6 && Math.abs(r.A[0][2]-1/3)<1e-6"},{"name":"scaling factor is 1/sqrt(2) for d_k=2","params":{"scaled":true,"temperature":1},"expr":"Math.abs(r.invSqrtDk-1/Math.sqrt(2))<1e-9"},{"name":"row 0 of the default case: scores 1,0,1 -> weights (0.468,0.063,0.468)","params":{"Q":[[1,0],[0,1],[1,1]],"K":[[1,0],[0,1],[1,1]],"scaled":true,"temperature":1},"expr":"Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2]-0.4683)<1e-3"},{"name":"output row 0 is the weighted sum of V rows","params":{"Q":[[1,0],[0,1],[1,1]],"K":[[1,0],[0,1],[1,1]],"V":[[1,0],[0,1],[1,1]],"scaled":true,"temperature":1},"expr":"Math.abs(r.O[0][0]-(r.A[0][0]*1+r.A[0][1]*0+r.A[0][2]*1))<1e-9 && Math.abs(r.O[0][1]-(r.A[0][0]*0+r.A[0][1]*1+r.A[0][2]*1))<1e-9"}],"explorations":[{"title":"Make every key look the same","predict":"If all three keys are identical, what should the attention weights in each row be?","preset":{"K":[[1,0],[1,0],[1,0]]},"watch":"maxWeight0","observe":"All scores in a row become equal, so every weight is 1/3 and maxWeight0 = 0.333; the output row becomes the plain average of the three value rows.","why":"Softmax of equal scores is uniform: exp(c)/3exp(c) = 1/3. Attention can only concentrate where keys differ."},{"title":"Turn scaling off with big scores","predict":"With scaling off and larger query/key entries, do the weights get flatter or sharper?","preset":{"scaled":false,"Q":[[3,3],[0,1],[1,1]],"K":[[3,3],[0,1],[1,1]]},"watch":"entropy0","observe":"Row 0 scores become 18, 3, 6 instead of 9, 1.5, 3, so the softmax is much sharper: entropy0 drops well below the scaled case and maxWeight0 rises toward 1.","why":"The paper's footnote: for unit-variance q,k the dot product has variance d_k, so scores grow like d_k and push softmax into a near-one-hot, tiny-gradient regime. Dividing by √d_k keeps the score scale roughly constant."}]};
+const BUILD = {"source_origin":"file","model":"deepseek/deepseek-v4.1-flash","checks":[{"id":"S1","name":"required_fields","result":"pass","detail":"ok"},{"id":"S2","name":"self_contained","result":"pass","detail":"ok: no external resources"},{"id":"S3","name":"protocol_parsed","result":"pass","detail":"ok"},{"id":"X1","name":"js_parses","result":"pass","detail":"compute and render compile"},{"id":"X2","name":"default_run","result":"pass","detail":"finite values for 6 intermediates; deterministic"},{"id":"X3","name":"boundaries","result":"pass","detail":"9 boundary runs without NaN/Infinity/exceptions"},{"id":"X4","name":"controls_matter","result":"pass","detail":"all 5 controls change the output"},{"id":"X5","name":"render_smoke","result":"pass","detail":"render ok at defaults and presets"},{"id":"X6","name":"time_limits","result":"pass","detail":"all JS evaluations under 1s"},{"id":"C1","name":"model_tests","result":"fail","detail":"'row 0 of the default case: scores 1,0,1 -> weights (0.468,0.' is false: Math.abs(r.A[0][0]-0.4683)<1e-3 && Math.abs(r.A[0][1]-0.0634)<1e-3 && Math.abs(r.A[0][2]-0.4683)<1e-3"},{"id":"C2","name":"exploration_presets","result":"pass","detail":"both presets change their watched value"},{"id":"C3","name":"invariants","result":"pass","detail":"4 invariants hold at defaults + presets"},{"id":"C4","name":"live_keys_resolve","result":"pass","detail":"11 live keys resolve"},{"id":"G1","name":"grounding_honesty","result":"pass","detail":"origin=file; 6 claims labelled"}],"generated_at":"2026-10-03T11:45:28Z"};
 
 </script>
 <script>
@@ -419,7 +443,8 @@ var kit = (function () {
 
   var st = {
     n: 0, store: {}, names: {}, nNames: 0, watch: null, width: 0, noMotion: false,
-    onSet: null, tl: {}, vec: {}, drag: null, dragInit: false, uid: 0
+    onSet: null, tl: {}, vec: {}, drag: null, dragInit: false, uid: 0,
+    lastBegin: -1e9, instant: false
   };
 
   /* ------------------------------------------------------------------ helpers */
@@ -700,19 +725,49 @@ var kit = (function () {
     if (s.sig === undefined) { s.cur = data; s.sig = sig; s.at = t; }
     else if (sig !== s.sig) {
       if (t - s.at > BURST_MS || s.ghost === null) { s.ghost = s.cur; s.ghostSig = s.sig; }
-      out.prev = s.cur; s.cur = data; s.sig = sig; s.at = t;
+      /* interruptible: if the previous tween is still in flight, start the new one from
+         the value currently on screen (not from the old target), so nothing jumps */
+      var origin = s.cur, el = t - s.at;
+      if (s.from !== undefined && s.from !== null && el >= 0 && el < TWEEN_MS) {
+        try { origin = blend(s.from, s.cur, ease(el / TWEEN_MS), 0); } catch (e) { origin = s.cur; }
+      }
+      out.prev = origin;
+      s.from = (st.instant || reducedMotion()) ? null : origin;
+      s.cur = data; s.sig = sig; s.at = t;
     }
     if (s.ghost !== null && s.ghostSig !== sig) out.ghost = s.ghost;
     return out;
   }
+  /* ease-out cubic: moves at once and settles without overshoot (close to a critically
+     damped spring), so a change reads as an immediate response, not a delayed one */
+  function ease(a) { a = clamp(a, 0, 1); return 1 - Math.pow(1 - a, 3); }
+  /* value currently on screen while a tween from a to b is at eased progress e */
+  function blend(a, b, e, d) {
+    if (d > 6) return b;
+    if (isNum(a) && isNum(b)) return a + (b - a) * e;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return b;
+      var o = [];
+      for (var i = 0; i < b.length; i++) o.push(blend(a[i], b[i], e, d + 1));
+      return o;
+    }
+    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) {
+      var r = {};
+      for (var k in b) if (Object.prototype.hasOwnProperty.call(b, k)) r[k] = blend(a[k], b[k], e, d + 1);
+      return r;
+    }
+    return b;
+  }
   function tween(fn) {
     fn(1); // final state first: correct even if animation frames never run
-    if (st.noMotion || reducedMotion() || typeof requestAnimationFrame !== 'function') return;
+    /* st.instant: continuous input (slider drag, held arrow key, handle drag) - the visual
+       tracks the input 1:1 instead of trailing behind it */
+    if (st.noMotion || st.instant || reducedMotion() || typeof requestAnimationFrame !== 'function') return;
     var t0 = null;
     function step(ts) {
       if (t0 === null) t0 = ts;
       var a = clamp((ts - t0) / TWEEN_MS, 0, 1);
-      var e = a < 0.5 ? 2 * a * a : 1 - Math.pow(-2 * a + 2, 2) / 2;
+      var e = ease(a);
       try { fn(e); } catch (err) { return; }
       if (a < 1) requestAnimationFrame(step);
     }
@@ -2146,7 +2201,10 @@ var kit = (function () {
     color: color, accent: 'var(--accent)', rng: rng,
     isWatched: isWatched,
     /* internal hooks used by app.js (not part of the generated-code API) */
-    _begin: function (opts) { st.n = 0; st.width = opts && isNum(opts.width) ? opts.width : st.width; },
+    _begin: function (opts) {
+      st.n = 0; st.width = opts && isNum(opts.width) ? opts.width : st.width;
+      var t = now(); st.instant = (t - st.lastBegin) < 90; st.lastBegin = t;
+    },
     _setWatch: function (key, label) { st.watch = key ? { key: str(key), label: str(label) } : null; },
     _onSet: function (fn) { st.onSet = fn; },
     _niceStep: niceStep
@@ -2157,193 +2215,112 @@ var kit = (function () {
 <script>
 function compute(p) {
   // ---- helpers (inside body) ----
-  function matVecMul(M, v) {
-    return M.map(row => row.reduce((s, x, i) => s + x * v[i], 0));
-  }
-  function dot(a, b) {
-    let s = 0;
-    for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-    return s;
-  }
-  function softmax(z) {
-    const m = Math.max(...z);
-    const ex = z.map(v => Math.exp(v - m));
-    const sum = ex.reduce((a, b) => a + b, 0);
-    return ex.map(v => v / sum);
-  }
+  function matVec(M, v) { return M.map(row => row.reduce((s, x, i) => s + x * v[i], 0)); }
+  function transpose(M) { return M[0].map((_, j) => M.map(row => row[j])); }
   function matMul(A, B) {
-    const n = A.length, m = B[0].length, k = B.length;
-    const out = [];
-    for (let i = 0; i < n; i++) {
-      const row = [];
-      for (let j = 0; j < m; j++) {
-        let s = 0;
-        for (let t = 0; t < k; t++) s += A[i][t] * B[t][j];
-        row.push(s);
-      }
-      out.push(row);
-    }
-    return out;
+    const Bt = transpose(B);
+    return A.map(row => Bt.map(col => row.reduce((s, x, i) => s + x * col[i], 0)));
   }
-  function transpose(M) {
-    const r = M.length, c = M[0].length;
-    const out = [];
-    for (let j = 0; j < c; j++) {
-      const row = [];
-      for (let i = 0; i < r; i++) row.push(M[i][j]);
-      out.push(row);
-    }
-    return out;
+  function softmax(row) {
+    const m = Math.max.apply(null, row);
+    const ex = row.map(x => Math.exp(x - m));
+    const s = ex.reduce((a, b) => a + b, 0);
+    return ex.map(x => x / s);
   }
+  function clamp(x) { return Math.max(-1e6, Math.min(1e6, x)); }
 
-  // ---- read controls ----
-  const Q = p.Q.map(r => r.slice());
-  const K = p.K.map(r => r.slice());
-  const V = p.V.map(r => r.slice());
+  const Q = p.Q, K = p.K, V = p.V;
   const dk = Q[0].length;
   const dv = V[0].length;
-  const scaleOn = !!p.scale;
-  const T = Math.max(0.05, p.temperature);
+  const invSqrtDk = 1 / Math.sqrt(dk);
 
-  // ---- scores S = Q K^T ----
-  const S = matMul(Q, transpose(K));
+  // raw scores S = Q K^T
+  const Sraw = matMul(Q, transpose(K)).map(r => r.map(clamp));
 
-  // ---- scaling factor ----
-  const invSqrtDk = scaleOn ? 1 / Math.sqrt(dk) : 1;
+  // scaling: divide by sqrt(d_k) when on, then apply extra 1/T
+  const scale = (p.scaled ? invSqrtDk : 1) / p.temperature;
+  const S = Sraw.map(r => r.map(x => clamp(x * scale)));
 
-  // ---- logits fed to softmax (scaled, then /T) ----
-  const logits = S.map(row => row.map(v => (v * invSqrtDk) / T));
+  // softmax per row -> attention weights A
+  const A = S.map(softmax);
 
-  // ---- attention weights A = softmax(logits) row by row ----
-  const A = logits.map(row => softmax(row));
-
-  // ---- output O = A V ----
+  // output O = A V
   const O = matMul(A, V);
 
-  // ---- summary stats ----
-  let maxWeight = 0;
-  for (const row of A) for (const w of row) if (w > maxWeight) maxWeight = w;
-  const rowSum0 = A[0].reduce((a, b) => a + b, 0);
-  const S00 = S[0][0];
-  const O00 = O[0][0];
-  // Footnote 4: unscaled score std ≈ sqrt(d_k) for iid mean-0 var-1 entries
-  const scoreStd = Math.sqrt(dk);
+  // diagnostics for row 0
+  const row0 = A[0];
+  const rowSum0 = row0.reduce((a, b) => a + b, 0);
+  const maxWeight0 = Math.max.apply(null, row0);
+  const entropy0 = -row0.reduce((s, w) => s + (w > 0 ? w * Math.log(w) : 0), 0);
 
   return {
-    S, logits, A, O,
-    dk, dv, invSqrtDk,
-    maxWeight, rowSum0, S00, O00, scoreStd,
-    scaleOn, T
+    Sraw: Sraw,
+    S: S,
+    A: A,
+    V: V,
+    O: O,
+    dk: dk,
+    dv: dv,
+    invSqrtDk: invSqrtDk,
+    scale: scale,
+    s00: Sraw[0][0],
+    rowSum0: rowSum0,
+    maxWeight0: maxWeight0,
+    entropy0: entropy0,
+    o00: O[0][0]
   };
 }
 </script>
 <script>
 function render(r, p, kit, el) {
-  // ---- helpers (inside body) ----
-  function fmtMat(M, d) {
-    return M.map(row => row.map(v => kit.fmt(v, d)).join('  ')).join('\n');
-  }
-  function argmaxRow(row) {
-    let best = 0;
-    for (let j = 1; j < row.length; j++) if (row[j] > row[best]) best = j;
-    return best;
-  }
+  const fmt = kit.fmt;
 
-  const nQ = r.A.length;
-  const nK = r.A[0].length;
-  const dv = r.O[0].length;
-
-  // ---- Panel 1: raw scores S = Q K^T ----
+  // ---- Panel 1: raw score matrix S = Q K^T ----
   kit.matrix(el, {
-    title: 'Raw scores S = Q Kᵀ  (rows = queries, cols = keys)',
-    data: r.S,
-    rowLabels: Array.from({ length: nQ }, (_, i) => 'q' + i),
-    colLabels: Array.from({ length: nK }, (_, j) => 'k' + j),
+    title: "Scores S = Q Kᵀ (rows = queries, cols = keys)",
+    data: r.Sraw,
+    rowLabels: ["q0", "q1", "q2"],
+    colLabels: ["k0", "k1", "k2"],
     fmt: 2,
-    scale: 'div',
-    highlight: [[0, argmaxRow(r.S[0])]]
-  });
-
-  // ---- Panel 2: attention weights A ----
-  kit.matrix(el, {
-    title: 'Attention weights A = softmax(S / √d_k)  (each row sums to 1)',
-    data: r.A,
-    rowLabels: Array.from({ length: nQ }, (_, i) => 'q' + i),
-    colLabels: Array.from({ length: nK }, (_, j) => 'k' + j),
-    fmt: 3,
-    scale: 'seq',
-    highlight: [[0, argmaxRow(r.A[0])]]
-  });
-
-  // ---- Panel 3: output O = A V ----
-  kit.matrix(el, {
-    title: 'Output O = A V  (weighted average of the value rows)',
-    data: r.O,
-    rowLabels: Array.from({ length: nQ }, (_, i) => 'q' + i),
-    colLabels: Array.from({ length: dv }, (_, c) => 'v' + c),
-    fmt: 3,
-    scale: 'div',
+    scale: "div",
     highlight: [[0, 0]]
   });
 
-  // ---- Panel 4: weight distribution for query 0, with reference line ----
-  const uniform = 1 / nK;
-  kit.bars(el, {
-    title: 'Query 0: weight on each key (dashed = uniform 1/n)',
-    name: 'weight A[0][j]',
-    labels: Array.from({ length: nK }, (_, j) => 'key ' + j),
-    values: r.A[0],
-    unit: '',
-    max: 1,
-    highlight: [argmaxRow(r.A[0])],
+  // ---- Panel 2: attention weights A (after scaling + softmax) ----
+  kit.matrix(el, {
+    title: "Weights A = softmax(S / √d_k) — each row sums to 1",
+    data: r.A,
+    rowLabels: ["q0", "q1", "q2"],
+    colLabels: ["k0", "k1", "k2"],
     fmt: 3,
-    secondary: {
-      name: 'uniform 1/n',
-      values: Array.from({ length: nK }, () => uniform)
-    }
+    scale: "seq",
+    highlight: [[0, r.A[0].indexOf(r.maxWeight0)]]
   });
 
-  // ---- Panel 5: how peaked is the softmax? ----
-  kit.bars(el, {
-    title: 'Peakedness: max weight vs uniform 1/n',
-    name: 'max weight in A',
-    labels: ['max weight', 'uniform 1/n'],
-    values: [r.maxWeight, uniform],
-    unit: '',
-    max: 1,
-    highlight: [0],
-    fmt: 3
+  // ---- Panel 3: output O = A V, with the V rows it averages ----
+  const oRows = r.O.map((row, i) => "O" + i + ": [" + row.map(x => fmt(x, 2)).join(", ") + "]");
+  const vRows = r.V.map((row, j) => "V" + j + ": [" + row.map(x => fmt(x, 2)).join(", ") + "]");
+  kit.pipeline(el, {
+    stages: [
+      { title: "Values V (rows = keys)", kind: "text", data: vRows, caption: "what gets averaged" },
+      { title: "Weights A (row 0)", kind: "vector", data: r.A[0], caption: "row 0 of A" },
+      { title: "Output O = A V", kind: "text", data: oRows, caption: "one row per query" }
+    ],
+    ops: ["weighted sum", "→"]
   });
 
-  // ---- Callouts: the two checks the FOCUS asks for ----
-  const rowSumOk = Math.abs(r.rowSum0 - 1) < 1e-9;
-  const weightedOk = r.O.every((row, i) =>
-    row.every((val, c) =>
-      Math.abs(val - r.A[i].reduce((s, w, j) => s + w * p.V[j][c], 0)) < 1e-9
-    )
-  );
+  // ---- callout: the two checks the learner should verify ----
+  const sumOk = Math.abs(r.rowSum0 - 1) < 1e-9;
+  const blend = r.O[0].map((v, c) => r.A[0].reduce((s, w, j) => s + w * r.V[j][c], 0));
+  const blendOk = r.O[0].every((v, c) => Math.abs(v - blend[c]) < 1e-9);
   kit.callout(
     el,
-    'Check 1 — every attention row sums to 1: row 0 sums to ' +
-      kit.fmt(r.rowSum0, 6) + (rowSumOk ? ' ✓' : ' ✗'),
-    rowSumOk ? 'key' : 'warn'
-  );
-  kit.callout(
-    el,
-    'Check 2 — output equals the weighted sum of V rows: ' +
-      (weightedOk ? 'O[i][c] = Σ_j A[i][j]·V[j][c] holds for all i,c ✓' : 'mismatch ✗'),
-    weightedOk ? 'key' : 'warn'
-  );
-
-  // ---- Callout: scaling status ----
-  kit.callout(
-    el,
-    'Scaling is ' + (r.scaleOn ? 'ON' : 'OFF') +
-      '  ·  d_k = ' + r.dk +
-      '  ·  1/√d_k = ' + kit.fmt(r.invSqrtDk, 4) +
-      '  ·  T = ' + kit.fmt(r.T, 2) +
-      '  ·  max weight = ' + kit.fmt(r.maxWeight, 4),
-    r.scaleOn ? 'info' : 'warn'
+    "Row 0 check — weights sum to " + fmt(r.rowSum0, 4) + (sumOk ? " ✓" : " ✗") +
+    "; O[0] = Σⱼ A[0][j]·V[j] = [" + blend.map(x => fmt(x, 3)).join(", ") + "]" +
+    (blendOk ? " ✓" : " ✗") +
+    "  (scaling " + (p.scaled ? "ON, 1/√d_k = " + fmt(r.invSqrtDk, 3) : "OFF") +
+    ", 1/T = " + fmt(1 / p.temperature, 2) + ")",
+    sumOk && blendOk ? "key" : "warn"
   );
 }
 </script>
@@ -2896,10 +2873,11 @@ function render(r, p, kit, el) {
     var head = h('header', { 'class': 'site-head wrap' }, [
       h('div', { 'class': 'eyebrow' }, [h('span', { text: 'Paper to Playground · interactive explainer' }), themeBtn]),
       h('h1', { text: str(S.title) || 'Interactive explainer' }),
-      cite.length ? h('p', { 'class': 'cite-line' }, ['Based on '].concat(cite)) : null,
-      h('nav', { 'aria-label': 'Sections' }, toc)
+      cite.length ? h('p', { 'class': 'cite-line' }, ['Based on '].concat(cite)) : null
     ]);
-    return { el: head, toc: toc };
+    /* section nav lives in its own full-width bar so it can stay pinned while reading */
+    var bar = h('div', { 'class': 'toc-bar' }, h('nav', { 'class': 'wrap', 'aria-label': 'Sections' }, toc));
+    return { el: head, bar: bar, toc: toc };
   }
 
   function buildIdea() {
@@ -3155,16 +3133,58 @@ function render(r, p, kit, el) {
     ])]);
   }
 
+  /* --------------------------------------------------------- wayfinding */
+  /* Marks the section currently being read in the pinned nav (aria-current), and
+     shows a soft edge under the bar only once content scrolls beneath it. */
+  function spy(links, bar) {
+    var ids = Object.keys(links);
+    var cur = null;
+    function mark(id) {
+      if (id === cur) return;
+      if (cur && links[cur]) { links[cur].removeAttribute('aria-current'); links[cur].classList.remove('cur'); }
+      cur = id;
+      var a = links[id];
+      if (!a) return;
+      a.setAttribute('aria-current', 'location'); a.classList.add('cur');
+      var ul = a.parentNode && a.parentNode.parentNode;
+      if (ul && ul.scrollWidth > ul.clientWidth + 1) {
+        var l = a.offsetLeft - ul.offsetLeft, r = l + a.offsetWidth;
+        if (l < ul.scrollLeft) ul.scrollLeft = Math.max(0, l - 16);
+        else if (r > ul.scrollLeft + ul.clientWidth) ul.scrollLeft = r - ul.clientWidth + 16;
+      }
+    }
+    function update() {
+      var line = (bar ? bar.offsetHeight : 0) + Math.min(160, window.innerHeight * 0.3);
+      var pick = ids.length ? ids[0] : null;
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (el && el.getBoundingClientRect().top <= line) pick = ids[i];
+      }
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4 && ids.length) pick = ids[ids.length - 1];
+      mark(pick);
+      if (bar) bar.classList.toggle('stuck', bar.getBoundingClientRect().top <= 0.5 && window.scrollY > 0);
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
   /* ----------------------------------------------------------------- init */
   function init() {
     document.title = (str(S.title) || 'Interactive explainer') + ' · Paper to Playground';
     var head = buildHeader();
     var main = h('main', { 'class': 'wrap', id: 'main' });
     [buildIdea(), buildNotation(), buildPlayground(), buildExplore(), buildLimitation(), buildSource(), buildChecks()].forEach(function (s) { if (s) main.append(s); });
-    sections.forEach(function (s) { head.toc.append(h('li', null, h('a', { href: '#' + s.id, text: s.title }))); });
+    var tocLinks = {};
+    sections.forEach(function (s) {
+      var a = h('a', { href: '#' + s.id, text: s.title });
+      tocLinks[s.id] = a;
+      head.toc.append(h('li', null, a));
+    });
     var foot = h('footer', { 'class': 'site-foot wrap', text: 'Generated by Paper to Playground · a single offline page: everything runs in your browser.' });
-    root.replaceChildren(head.el, main, foot);
+    root.replaceChildren(head.el, head.bar, main, foot);
     run();
+    try { spy(tocLinks, head.bar); } catch (e) { /* wayfinding is optional */ }
     if (location.hash && location.hash.length > 1) {
       var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
       if (target) target.scrollIntoView();
