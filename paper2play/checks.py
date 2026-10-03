@@ -19,9 +19,9 @@ CHECK_NAMES = {
     "S1": "required_fields", "S2": "self_contained", "S3": "protocol_parsed",
     "X1": "js_parses", "X2": "default_run", "X3": "boundaries", "X4": "controls_matter",
     "X5": "render_smoke", "X6": "time_limits", "C1": "model_tests", "C2": "exploration_presets",
-    "C3": "invariants", "G1": "grounding_honesty",
+    "C3": "invariants", "C4": "live_keys_resolve", "G1": "grounding_honesty",
 }
-ORDER = ("S1", "S2", "S3", "X1", "X2", "X3", "X4", "X5", "X6", "C1", "C2", "C3", "G1")
+ORDER = ("S1", "S2", "S3", "X1", "X2", "X3", "X4", "X5", "X6", "C1", "C2", "C3", "C4", "G1")
 EVAL_TIME_LIMIT_S = 1
 MEMORY_LIMIT = 128 * 1024 * 1024
 CHECKS_TIME_BUDGET_S = 25.0
@@ -333,7 +333,7 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
     results["S3"] = check_s3(parsed) if parsed is not None else _res("S3", "skip", "not parsed here")
     results["G1"] = check_g1(spec, origin, norm_notes)
 
-    x_ids = ("X1", "X2", "X3", "X4", "X5", "X6", "C1", "C2", "C3")
+    x_ids = ("X1", "X2", "X3", "X4", "X5", "X6", "C1", "C2", "C3", "C4")
     if quickjs is None:
         for cid in x_ids:
             results[cid] = _res(cid, "skip", "quickjs not installed: JS not executed")
@@ -385,12 +385,12 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
     results["X1"] = _res("X1", "fail" if x1 else "pass", "; ".join(x1) or "compute and render compile")
 
     if not isinstance(spec, dict) or not spec.get("controls"):
-        for cid in ("X2", "X3", "X4", "X5", "C1", "C2", "C3"):
+        for cid in ("X2", "X3", "X4", "X5", "C1", "C2", "C3", "C4"):
             results[cid] = _res(cid, "skip", "no valid SPEC/controls")
         results["X6"] = _res("X6", "fail" if js.timeouts else "pass", f"{js.timeouts} timeouts")
         return [results[k] for k in ORDER]
     if not have_compute:
-        for cid in ("X2", "X3", "X4", "X5", "C1", "C2", "C3"):
+        for cid in ("X2", "X3", "X4", "X5", "C1", "C2", "C3", "C4"):
             results[cid] = _res(cid, "skip", "compute() unavailable (see X1)")
         results["X6"] = _res("X6", "fail" if js.timeouts else "pass", f"{js.timeouts} timeouts")
         return [results[k] for k in ORDER]
@@ -441,21 +441,42 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
     if base_sig is None:
         results["X4"] = _res("X4", "skip", "default run failed")
     else:
-        dead = []
+        # A control may legitimately matter only under another select/toggle setting
+        # (e.g. custom probabilities when shape = "custom"), so also try those contexts.
+        contexts = [dict(defaults)]
+        for o in spec["controls"]:
+            if o["type"] in ("select", "toggle"):
+                for v in _alt_values(o):
+                    ctx = dict(defaults)
+                    ctx[o["id"]] = v
+                    contexts.append(ctx)
+        dead, conditional = [], []
         for c in spec["controls"]:
-            changed = False
-            for v in _alt_values(c):
-                p = dict(defaults)
-                p[c["id"]] = v
-                out, _ = run(p)
-                if out is not None and not out.get("error") and out.get("sig") != base_sig:
-                    changed = True
+            changed_at = None
+            for ci, ctx in enumerate(contexts):
+                if ctx is not contexts[0] and ctx.get(c["id"]) != defaults.get(c["id"]):
+                    continue  # this context varies the control itself
+                ref, _ = run(ctx) if ci else ({"sig": base_sig}, None)
+                if ref is None or ref.get("error"):
+                    continue
+                for v in _alt_values(c):
+                    p = dict(ctx)
+                    p[c["id"]] = v
+                    out, _ = run(p)
+                    if out is not None and not out.get("error") and out.get("sig") != ref.get("sig"):
+                        changed_at = ci
+                        break
+                if changed_at is not None:
                     break
-            if not changed:
+            if changed_at is None:
                 dead.append(c["id"])
-        results["X4"] = _res("X4", "fail" if dead else "pass",
-                             (f"control(s) change nothing in compute(p): {', '.join(dead)}" if dead
-                              else f"all {len(spec['controls'])} controls change the output"))
+            elif changed_at:
+                conditional.append(c["id"])
+        detail = (f"control(s) change nothing in compute(p): {', '.join(dead)}" if dead
+                  else f"all {len(spec['controls'])} controls change the output")
+        if conditional and not dead:
+            detail += f" ({', '.join(conditional)} only under another select/toggle setting)"
+        results["X4"] = _res("X4", "fail" if dead else "pass", detail)
 
     # X5 render smoke
     if kit_state != "ok":
@@ -530,6 +551,25 @@ def run_checks(spec, compute_js, render_js, html, origin: str, parsed=None, norm
                 break
     results["C3"] = _res("C3", "fail" if probs or not invs else "pass",
                          "; ".join(probs[:4]) or (f"{len(invs)} invariants hold at defaults + presets" if invs else "no invariants"))
+
+    # C4 every {key} in live equations and every intermediates key resolves in r (or p) at defaults,
+    # otherwise the page shows "?" / "—" placeholders instead of numbers
+    probs = []
+    keys = [(f"intermediate '{it.get('key')}'", str(it.get("key", ""))) for it in spec.get("intermediates", [])]
+    for eq in spec.get("equations", []):
+        for k in re.findall(r"\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+|\[\d+\])*)\s*(?::\s*\d+)?\s*\}", str(eq.get("live") or "")):
+            keys.append((f"live equation '{str(eq.get('label', ''))[:30]}' key {{{k}}}", k))
+    getter = ("(function(o,s){var a=s.replace(/\\[(\\d+)\\]/g,'.$1').split('.').filter(Boolean);"
+              "for(var i=0;i<a.length;i++){if(o===null||o===undefined)return undefined;o=o[a[i]];}return o;})")
+    for where, k in keys:
+        if not k:
+            continue
+        out, err = js.call("expr", json.dumps(defaults),
+                           f"{getter}(r,{json.dumps(k)})!==undefined||{getter}(p,{json.dumps(k)})!==undefined")
+        if out is None or out.get("error") or not out.get("value"):
+            probs.append(f"{where} is not returned by compute()")
+    results["C4"] = _res("C4", "fail" if probs else "pass",
+                         "; ".join(probs[:4]) or f"{len(keys)} live keys resolve")
 
     results["X6"] = _res("X6", "fail" if js.timeouts else "pass",
                          f"{js.timeouts} evaluation(s) hit the {EVAL_TIME_LIMIT_S}s limit" if js.timeouts

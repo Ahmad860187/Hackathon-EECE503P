@@ -141,10 +141,24 @@ def _fix_control(c: dict, notes: list):
     return c
 
 
+TOP_LEVEL_KEYS = ("title", "paper", "idea", "why", "symbols", "equations", "controls", "intermediates",
+                  "visual", "explorations", "limitation", "claims", "invariants", "tests")
+
+
 def normalize_spec(spec: dict, case: dict, origin: str) -> tuple:
     """Return (normalised copy, notes)."""
     notes = []
     s = copy.deepcopy(spec) if isinstance(spec, dict) else {}
+    # Models sometimes nest top-level keys inside a sibling object (seen: "explorations" inside
+    # "visual"). Hoist any missing top-level key found one level down.
+    for key in TOP_LEVEL_KEYS:
+        if key in s:
+            continue
+        for parent, val in list(s.items()):
+            if isinstance(val, dict) and key in val:
+                s[key] = val.pop(key)
+                notes.append(f"'{key}' was nested inside '{parent}'; moved to top level")
+                break
     s["title"] = _s(s.get("title")) or _s(case.get("focus"))[:80] or "Interactive explainer"
     paper = s.get("paper") if isinstance(s.get("paper"), dict) else {}
     for k in ("title", "authors", "year", "url", "section"):

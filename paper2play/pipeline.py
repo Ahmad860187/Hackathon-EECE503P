@@ -8,6 +8,7 @@ regression) is promoted. Outputs are always written (fallback page if needed).
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -152,6 +153,10 @@ class Run:
         return cand
 
     def candidate_from_text(self, text: str, label: str) -> Candidate:
+        dbg = os.environ.get("P2P_DEBUG_DIR")  # development only: keep the raw model reply for inspection
+        if dbg:
+            Path(dbg).mkdir(parents=True, exist_ok=True)
+            (Path(dbg) / f"raw_{label}.txt").write_text(text, encoding="utf-8")
         parsed = parse_output(text)
         self.trace.event("parse", "protocol", "ok" if len(parsed.found) == 3 and parsed.spec else "fail",
                          candidate=label, found=parsed.found, notes=parsed.notes,
@@ -182,6 +187,9 @@ class Run:
                 opt.add("SPEC")
             elif cid == "X5":
                 req.add("RENDER")
+            elif cid == "C4":
+                req.add("SPEC")
+                opt.add("COMPUTE")
             elif cid == "C2":
                 if any(f["id"] == "X4" for f in chk.failing(cand.checks)):
                     req.add("COMPUTE")       # a dead control explains the unchanged watch value

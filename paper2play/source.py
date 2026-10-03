@@ -97,9 +97,16 @@ def html_to_text(raw: str) -> tuple:
     return title, _clean_ws(html.unescape(body))
 
 
+_ARXIV_ID = r"([0-9]{4}\.[0-9]{4,5}(?:v\d+)?|[a-z\-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)"
+
+
 def _arxiv_id(url: str):
-    m = re.search(r"arxiv\.org/(?:abs|pdf|html)/([0-9]{4}\.[0-9]{4,5}(?:v\d+)?|[a-z\-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)",
-                  url, re.I)
+    url = url.strip()
+    m = re.search(r"arxiv\.org/(?:abs|pdf|html)/" + _ARXIV_ID, url, re.I)
+    if not m:  # mirrors and aggregators: ar5iv, alphaxiv, huggingface papers, DOI 10.48550/arXiv.X, "arXiv:X", bare id
+        m = (re.search(r"(?:ar5iv|alphaxiv|huggingface\.co/papers)[^\s]*?/" + _ARXIV_ID, url, re.I)
+             or re.search(r"(?:10\.48550/arXiv\.|arXiv:\s*)" + _ARXIV_ID, url, re.I)
+             or re.fullmatch(_ARXIV_ID, url, re.I))
     if not m:
         return None
     aid = m.group(1)
@@ -200,7 +207,7 @@ def load_source(case: dict, case_dir=None, allow_network: bool = True) -> dict:
                     pass
 
     # 3. network fetch (short, stdlib only)
-    if allow_network and re.match(r"(?i)^https?://", src):
+    if allow_network and (re.match(r"(?i)^https?://", src) or _arxiv_id(src)):
         t_end = time.monotonic() + FETCH_TOTAL_S
         urls = []
         aid = _arxiv_id(src)

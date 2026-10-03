@@ -56,6 +56,17 @@ class _HTTPFailure(Exception):
         self.retry_after = retry_after
 
 
+def reasoning_setting() -> dict:
+    """Hidden reasoning counts as completion tokens and dominates latency. Measured on
+    deepseek-v4.1-flash: effort "low" still spent ~12k reasoning tokens per generation,
+    while enabled=false spent 0. P2P_REASONING=<n> grants a capped budget instead."""
+    import os
+    v = os.environ.get("P2P_REASONING", "off").strip().lower()
+    if v.isdigit() and int(v) > 0:
+        return {"max_tokens": int(v), "exclude": True}
+    return {"enabled": False, "exclude": True}
+
+
 def _short(s, n=300):
     s = str(s)
     return s if len(s) <= n else s[:n] + "..."
@@ -91,6 +102,7 @@ class OpenRouterClient:
         self.session = session or requests.Session()
         self.sleep = sleep
         self.send_reasoning = True
+        self.reasoning_override = None
 
     # ------------------------------------------------------------------ HTTP
     def _post(self, body: dict, deadline_s: float):
@@ -175,7 +187,7 @@ class OpenRouterClient:
                 "usage": {"include": True},
             }
             if self.send_reasoning:
-                body["reasoning"] = {"effort": "low", "exclude": True}
+                body["reasoning"] = self.reasoning_override or reasoning_setting()
             call_no = self.budget.start_request()
             calls.append(call_no)
             attempts += 1
@@ -235,7 +247,14 @@ class OpenRouterClient:
             if not text.strip():
                 last_err = f"empty content (finish_reason={finish})"
                 self.trace.event(stage, "llm_call", "fail", detail=last_err, **ev)
-                if finish == "length":  # spent everything on reasoning: retrying the same way won't help
+                if finish == "length":
+                    # All tokens went to hidden reasoning. Retrying the same way won't help, so
+                    # retry once with reasoning switched off (the rest of the run keeps it off).
+                    if self.send_reasoning and self.reasoning_override is None:
+                        self.reasoning_override = {"enabled": False, "exclude": True}
+                        self.trace.event(stage, "llm_call", "retry", purpose=purpose,
+                                         detail="reasoning consumed the budget; retrying with reasoning disabled")
+                        continue
                     raise LLMError(last_err)
                 continue
             self.trace.event(stage, "llm_call", "ok", **ev)
