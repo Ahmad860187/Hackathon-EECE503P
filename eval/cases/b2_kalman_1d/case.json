@@ -1,0 +1,5 @@
+{
+  "source_url": "https://arxiv.org/html/1910.03558v1",
+  "focus": "Kalman filter, scalar (one-dimensional) case: show one predict step and one update step at a time for a constant or slowly drifting quantity measured with noise. Let the learner set the initial estimate and its variance, the process noise Q, the measurement noise R and type in measurements. Show the Kalman gain, the corrected estimate and its variance after each measurement, and how the gain settles to a steady value. Contrast trusting the sensor (small R) with trusting the model (large R).",
+  "audience": "Second-year EE undergraduate who knows mean and variance but has not studied estimation theory."
+}

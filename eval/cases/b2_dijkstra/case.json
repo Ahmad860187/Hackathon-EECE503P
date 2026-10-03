@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1007/BF01386390",
+  "focus": "Dijkstra (1959), A Note on Two Problems in Connexion with Graphs, Problem 2 (shortest path between two nodes). Build a step-by-step explorer on a small weighted graph of about six nodes where the learner picks the start node, edits edge weights and steps through the algorithm one node at a time. Checks: (1) the tentative-distance table updates only when a shorter path is found; (2) nodes are settled in non-decreasing order of distance and a settled distance never changes; (3) the final path can be traced back through predecessors and its weights sum to the reported distance; (4) explain why negative edge weights break the method.",
+  "audience": "Second-year computer science student who knows breadth-first search and priority queues."
+}

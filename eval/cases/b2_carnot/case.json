@@ -1,0 +1,5 @@
+{
+  "source_url": "https://archive.org/details/reflectionsonmot00carnrich",
+  "focus": "Carnot (1824), Reflections on the Motive Power of Heat. Explain why no heat engine working between two temperatures can beat the reversible (Carnot) engine, and compute that limit. Let the learner set the hot and cold reservoir temperatures and the heat drawn from the hot reservoir. Show the four steps of the cycle on a P-V or T-S sketch, the work output, the heat rejected and the efficiency limit. Make clear which parts are Carnot's 1824 argument and which are the later Kelvin-scale formula, and guard against entering temperatures in Celsius.",
+  "audience": "Mechanical engineering senior who has taken one thermodynamics course."
+}

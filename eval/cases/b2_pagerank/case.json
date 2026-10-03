@@ -1,0 +1,5 @@
+{
+  "source_url": "http://infolab.stanford.edu/pub/papers/google.pdf",
+  "focus": "PageRank, Section 2.1 of The Anatomy of a Large-Scale Hypertextual Web Search Engine. Explain the random surfer and the damping factor on a web of four pages. Let the learner add or remove links, change d, and step the power iteration one round at a time until the ranks stop changing. Check the formula's normalisation: the paper's printed form makes ranks sum to the number of pages, not to one.",
+  "audience": "Information systems student comfortable with fractions and simple matrices."
+}

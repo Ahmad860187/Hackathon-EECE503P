@@ -1957,6 +1957,12 @@ fitted from data.
                "subfield": "Physical Chemistry", "difficulty": "Hard", "targets": "computed here"},
 )
 
+# Batch 2 (b2_*, pv_*) lives in cases_b2.py to keep this file reviewable --------------------------
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cases_b2  # noqa: E402
+
+cases_b2.register(case, q)
+
 
 # ----------------------------------------------------------------------------------------------
 def write_all(check_only=False):

@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1145/363011.363155",
+  "focus": "Belady, Nelson and Shedler (1969), An Anomaly in Space-Time Characteristics of Certain Programs Running in a Paging Machine. Step through a page reference string frame by frame for FIFO and LRU replacement, marking hits and faults. Let the learner edit the reference string and the number of frames. Guide them to the anomaly: with FIFO, more frames can cause more faults. Check that 1,2,3,4,1,2,5,1,2,3,4,5 gives 9 FIFO faults with 3 frames and 10 with 4, and that LRU never gets worse with more frames.",
+  "audience": "Computer engineering junior taking an operating systems course."
+}

@@ -1,0 +1,19 @@
+Source: W. Casscells, A. Schoenberger and T. B. Graboys, "Interpretation by Physicians of Clinical
+Laboratory Results", New England Journal of Medicine 299 (1978) 999-1001. Paraphrased; the publisher
+page returns 403 to scripts, so the study details were checked against secondary descriptions.
+
+The authors put one question to staff and students at Harvard Medical School hospitals: if a test to
+detect a disease whose prevalence is 1/1000 has a false-positive rate of 5 percent, what is the chance
+that a person found to have a positive result actually has the disease, assuming nothing is known
+about the person's symptoms or signs? Only a small minority (about 11 of 60) answered close to the
+correct value of roughly 2 percent; the most common answer was 95 percent.
+
+The correct reasoning is Bayes' theorem. Assuming the test detects every true case (sensitivity 1),
+out of 1000 people about 1 has the disease and tests positive, while about 5 percent of the 999
+healthy people (about 50) also test positive. So only about 1 of 51 positives is a true case:
+
+    P(disease | +) = P(+ | disease) P(disease) / [P(+ | disease) P(disease) + P(+ | healthy) P(healthy)]
+
+The error, now called base-rate neglect or the base-rate fallacy, is to confuse P(+ | disease), or
+1 minus the false-positive rate, with P(disease | +), ignoring how rare the disease is. The authors
+argued that clinicians need better training in interpreting test results.

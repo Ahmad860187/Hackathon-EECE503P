@@ -1,0 +1,23 @@
+Source: E. N. Lorenz, "Deterministic Nonperiodic Flow", Journal of the Atmospheric Sciences 20 (1963)
+130-141. Paraphrased (publisher page not fetched by script).
+
+Lorenz reduced a model of convection in a layer of fluid heated from below to three ordinary
+differential equations:
+
+    dX/dt = -sigma X + sigma Y
+    dY/dt = -X Z + r X - Y
+    dZ/dt = X Y - b Z
+
+X measures the intensity of convective motion, Y the temperature difference between rising and
+falling currents, and Z the distortion of the vertical temperature profile. sigma is the Prandtl
+number, r the Rayleigh number relative to its critical value, and b a geometric factor. Lorenz used
+sigma = 10, b = 8/3 and r = 28 and integrated numerically.
+
+For r < 1 the state of rest (the origin) is stable. For r > 1 there are two steady convection states
+C and C' at X = Y = +/- sqrt(b(r - 1)), Z = r - 1, which are stable only below a critical r (about
+24.74 for these sigma and b). At r = 28 all three steady states are unstable, and solutions wander
+forever between the neighbourhoods of C and C' without settling into a periodic pattern; they are
+deterministic yet nonperiodic. Lorenz showed that two states differing by imperceptible amounts can
+evolve into considerably different states. He concluded that if the atmosphere behaves this way,
+prediction of the sufficiently distant future is impossible by any method unless the present
+conditions are known exactly.

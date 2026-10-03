@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1175/1520-0469(1963)020<0130:DNF>2.0.CO;2",
+  "focus": "Lorenz (1963), Deterministic Nonperiodic Flow. Show sensitive dependence on initial conditions with two trajectories of the three Lorenz equations that start a tiny distance apart. Let the learner set sigma, r and b, the initial point and the size of the perturbation; plot both trajectories in 3D or as x(t), and the distance between them on a log scale. Guide them through r below 1 (everything decays to the origin), r = 14 (settles to a fixed point) and r = 28 (chaos).",
+  "audience": "Applied mathematics junior who has studied linear ODE systems and eigenvalues."
+}

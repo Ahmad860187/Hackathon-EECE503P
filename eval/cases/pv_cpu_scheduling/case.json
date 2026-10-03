@@ -1,0 +1,5 @@
+{
+  "source_url": "https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf",
+  "focus": "Compare FIFO, shortest-job-first and round-robin CPU scheduling on a few jobs that all arrive at time 0. Let the learner set burst lengths and the round-robin time slice, draw the Gantt chart for each policy, and show per-job waiting, turnaround and response times with their averages.",
+  "audience": "Information technology diploma student in an operating systems course."
+}

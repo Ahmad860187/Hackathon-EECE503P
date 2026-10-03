@@ -1,0 +1,18 @@
+Source: R. Pagh and F. F. Rodler, "Cuckoo Hashing", Journal of Algorithms 51(2) (2004) 122-144
+(conference version: ESA 2001, LNCS 2161). Paraphrased.
+
+Cuckoo hashing is a dictionary with worst-case constant lookup time. It uses two tables T1 and T2,
+each of size r, and two hash functions h1 and h2. Every key x is stored either in cell h1(x) of T1 or
+in cell h2(x) of T2, never anywhere else. So a lookup inspects at most two cells, and a deletion
+simply clears the cell that holds the key.
+
+Insertion follows the behaviour of the cuckoo chick, which pushes other eggs out of the nest. A new
+key x is put into T1[h1(x)]. If that cell was occupied, the previous occupant y is kicked out and
+moved to its alternative cell T2[h2(y)], which may in turn kick out another key, which goes back to
+its cell in T1, and so on. The process ends when a key lands in an empty cell. If it has not ended
+after MaxLoop steps, the keys may be on a cycle that can never be resolved; new hash functions are
+then chosen and everything is rehashed. The analysis requires each table to be somewhat larger than
+the number of keys (r >= (1 + epsilon) n, i.e. total load below 50 percent). Under that condition,
+with suitable hash functions, insertion takes expected constant amortized time.
+
+Teaching example used here: r = 5, h1(k) = k mod 5, h2(k) = floor(k/5) mod 5, MaxLoop = 10.

@@ -1,0 +1,19 @@
+Source: R. H. Arpaci-Dusseau and A. C. Arpaci-Dusseau, Operating Systems: Three Easy Pieces, Chapter 7
+"Scheduling: Introduction" (free online textbook, version 1.10). Paraphrased from the PDF text
+extracted on 2026-10-03.
+
+The chapter introduces scheduling policies through simple workloads. Turnaround time is completion
+time minus arrival time; response time is the time from arrival to the first time the job runs.
+Waiting time is time spent ready but not running (turnaround minus run time when all jobs arrive at 0).
+
+FIFO (first come, first served) is simple, but suffers from the convoy effect: if a long job A (100 s)
+arrives just before two short jobs B and C (10 s each), the short jobs wait behind it and average
+turnaround is (100 + 110 + 120)/3 = 110 s. Shortest Job First runs the shortest job first; with all
+jobs arriving together it is optimal for average turnaround, here (10 + 20 + 120)/3 = 50 s. Its
+preemptive version (STCF) handles later arrivals.
+
+Both are poor for response time on interactive systems, because the last job waits for all others to
+finish. Round Robin runs each job for a time slice (scheduling quantum) and then switches to the next
+job in the queue. With a short slice, response time is excellent, but turnaround time is among the
+worst, because every job is stretched out. The slice length trades responsiveness against the cost
+of context switching.

@@ -1,0 +1,19 @@
+Source: G. E. Hinton, N. Srivastava, A. Krizhevsky, I. Sutskever and R. R. Salakhutdinov, "Improving
+neural networks by preventing co-adaptation of feature detectors", arXiv:1207.0580 (2012). Paraphrased
+from the abstract and method description (arXiv PDF v1).
+
+A large feedforward network trained on a small training set tends to overfit. The paper reduces this
+by randomly omitting half of the hidden units ("feature detectors") on each training case. Because a
+unit cannot rely on any particular other unit being present, complex co-adaptations are prevented,
+and each unit must learn a feature that is useful in many different contexts. Each training case
+therefore effectively trains a different "thinned" network; with n units there are 2^n possible
+thinned networks, all sharing weights.
+
+At test time all units are used, but their outgoing weights are halved (when units were kept with
+probability one half) to compensate for the fact that twice as many are now active. The authors call
+this the "mean network". With a single hidden layer and a softmax output, using the mean network is
+equivalent to taking the geometric mean of the predictions of all 2^n thinned networks. In general,
+if each unit is kept with probability p, the expected input a downstream unit receives during
+training is p times its input in the full network, which is exactly what scaling the weights by p at
+test time reproduces. The paper also reports that dropping 20% of the input units helps on some tasks.
+Dropout gave large improvements on speech and object recognition benchmarks.

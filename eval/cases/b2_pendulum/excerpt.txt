@@ -1,0 +1,20 @@
+Source: arXiv:0707.1029, "Systematic approximations for the period of a finite amplitude pendulum"
+(2007). Paraphrased from the abstract, plus the standard result it builds on.
+
+For small swings a simple pendulum of length L obeys d^2 theta/dt^2 = -(g/L) sin theta ~ -(g/L) theta,
+which gives simple harmonic motion with period T0 = 2 pi sqrt(L/g), independent of amplitude. For a
+release angle theta0 that is not small, the exact period is
+
+    T = 4 sqrt(L/g) K(k),   k = sin(theta0/2),
+
+where K is the complete elliptic integral of the first kind; equivalently T = T0 / AGM(1, cos(theta0/2))
+using the arithmetic-geometric mean. The period always grows with amplitude and diverges as theta0
+approaches 180 degrees (the inverted position). Expanding in the amplitude gives the standard series
+
+    T = T0 (1 + theta0^2/16 + 11 theta0^4/3072 + ...),
+
+so at 10 degrees the small-angle formula is off by only about 0.2 percent, but at 90 degrees by about
+15 percent. The paper notes that truncating the standard series (written in terms of the energy, and
+hence amplitude) always gives a lower limit on the period, because every term is positive. Adjusting
+the last kept term to account for the dropped terms gives an upper limit, and intermediate expressions
+then give more accurate approximations.

@@ -1,0 +1,5 @@
+{
+  "source_url": "https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf",
+  "focus": "In Search of an Understandable Consensus Algorithm (Raft), Section 5.2 Leader election. Simulate a small cluster step by step: followers with randomized election timeouts, a follower that times out becomes a candidate, increments its term, votes for itself and requests votes. Let the learner set the cluster size and each server's timeout, crash the leader, and step through message delivery. Show each server's state, current term and vote. Check that at most one leader is elected per term, that a majority is required, and show a split vote resolved by a new term.",
+  "audience": "Third-year software engineering student who has written multithreaded code but never studied consensus."
+}

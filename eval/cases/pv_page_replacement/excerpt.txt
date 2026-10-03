@@ -1,0 +1,19 @@
+Source: L. A. Belady, R. A. Nelson and G. S. Shedler, "An Anomaly in Space-Time Characteristics of
+Certain Programs Running in a Paging Machine", Communications of the ACM 12(6) (1969) 349-353.
+Paraphrased (ACM page returns 403 to scripts); the reference string below is the standard
+illustration of their result.
+
+In a paging machine, a program's pages are brought into a fixed number of main-memory page frames on
+demand. When a referenced page is absent (a page fault) and all frames are full, a replacement
+algorithm chooses a page to evict. Intuition says that giving a program more frames can never
+increase its number of page faults. The authors showed that this is false for the
+first-in-first-out (FIFO) rule: for certain reference strings, FIFO produces more faults with more
+memory. This is now called Belady's anomaly.
+
+Example: the reference string 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5 causes 9 faults with 3 frames under
+FIFO but 10 faults with 4 frames.
+
+Least-recently-used (LRU) replacement evicts the page whose last use is furthest in the past. LRU and
+the optimal rule (evict the page whose next use is furthest in the future) are stack algorithms: the
+set of pages held with n frames is always contained in the set held with n + 1 frames, so they
+cannot exhibit the anomaly.

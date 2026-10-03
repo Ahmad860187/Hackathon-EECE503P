@@ -1,0 +1,18 @@
+Benchmark provenance: TheoremExplainBench theorem_128 "Dijkstra's algorithm" (comp_sci / Graph Theory,
+Medium), MIT licence: the algorithm keeps a priority queue of vertices ordered by distance from the
+start and repeatedly selects the next shortest path to an unconnected part of the graph. Primary
+source: E. W. Dijkstra, "A note on two problems in connexion with graphs", Numerische Mathematik 1
+(1959) 269-271. Paraphrased.
+
+Dijkstra considers n nodes connected by branches of given positive length and solves two problems:
+(1) the tree of minimum total length connecting all nodes, and (2) the path of minimum total length
+between two given nodes P and Q. For problem 2 the nodes are split into three sets: A, nodes whose
+minimal path from P is known; B, nodes reachable from A by one branch, each with a tentative
+distance; and C, the remaining nodes. Initially A holds only P. Repeatedly: for the node just added
+to A, consider every branch to a node R outside A. If R is in C it moves to B with tentative distance
+via this branch; if R is already in B, its tentative distance is replaced only if the new path is
+shorter. Then the node of B with the smallest tentative distance is moved to A; its distance is now
+final. The process stops when Q is moved to A. Because branch lengths are non-negative, no later
+path can improve on the smallest tentative distance, which is why it can be fixed. Dijkstra notes the
+method needs only the data for the branches considered and is efficient compared with methods that
+enumerate paths.

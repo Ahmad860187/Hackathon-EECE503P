@@ -1,0 +1,19 @@
+Source: D. Ongaro and J. Ousterhout, "In Search of an Understandable Consensus Algorithm", 2014 USENIX
+Annual Technical Conference, pp. 305-319; PDF text extracted from usenix.org on 2026-10-03.
+Paraphrased, with one short quotation.
+
+Each Raft server is a follower, a candidate or a leader. Time is divided into terms numbered with
+consecutive integers; each term begins with an election, and each server stores its current term.
+Leaders send periodic heartbeats. If a follower hears nothing for an election timeout, it assumes
+there is no leader: it increments its current term, becomes a candidate, votes for itself and sends
+RequestVote RPCs to all other servers. A candidate wins if it receives votes from a majority of the
+servers in the full cluster for the same term. Each server votes for at most one candidate per term,
+first come first served, so at most one candidate can win a given term (Election Safety). A server
+that sees a higher term updates its own term and reverts to follower; requests carrying a stale term
+are rejected.
+
+If several followers become candidates at once, votes may split so that nobody gets a majority; each
+candidate then times out and starts a new election with a higher term. To make split votes rare,
+"election timeouts are chosen randomly from a fixed interval (e.g., 150-300ms)", so usually one server
+times out first, wins, and sends heartbeats before any other server times out. Section 5.4 adds a
+restriction: a vote is only granted to a candidate whose log is at least as up to date.

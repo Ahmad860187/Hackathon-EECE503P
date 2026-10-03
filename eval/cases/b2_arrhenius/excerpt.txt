@@ -1,0 +1,18 @@
+Benchmark provenance: TheoremExplainBench theorem_147 "Arrhenius Equation" (chemistry / Chemical
+Kinetics, Medium), MIT licence: a formula for the temperature dependence of reaction rates. Primary
+source: S. Arrhenius, "Uber die Reaktionsgeschwindigkeit bei der Inversion von Rohrzucker durch
+Sauren", Zeitschrift fur physikalische Chemie 4 (1889) 226-248. Paraphrased.
+
+Arrhenius studied how fast cane sugar (sucrose) is inverted by acids and found that the rate rises
+far faster with temperature than the speed of the molecules or the number of collisions would
+suggest. He explained this by assuming that only a small fraction of "active" molecules can react,
+and that this fraction is in equilibrium with the ordinary molecules. Its temperature dependence
+follows van 't Hoff's equation for equilibria, so it grows exponentially. In modern form
+
+    k = A exp(-Ea / (R T)),
+
+where Ea is the activation energy, A the pre-exponential factor, R = 8.314 J/(mol K) and T is the
+absolute temperature. Taking logarithms, ln k = ln A - (Ea/R)(1/T), so a plot of ln k against 1/T
+is a straight line with slope -Ea/R. From two rate constants, Ea = R ln(k2/k1) / (1/T1 - 1/T2). For
+activation energies around 50 kJ/mol, a 10 K rise near room temperature roughly doubles the rate,
+which is the origin of the familiar rule of thumb.

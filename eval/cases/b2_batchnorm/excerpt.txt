@@ -1,0 +1,21 @@
+Source: S. Ioffe and C. Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing
+Internal Covariate Shift", arXiv:1502.03167 (ICML 2015). Paraphrased from the abstract and Section 3.
+
+Training deep networks is complicated because the distribution of each layer's inputs changes as the
+parameters of earlier layers change; the authors call this internal covariate shift. They make
+normalization part of the architecture and perform it for each training mini-batch.
+
+Algorithm 1 (Batch Normalizing Transform), applied to each activation x over a mini-batch
+B = {x_1 ... x_m}:
+    mu_B = (1/m) sum x_i                      (mini-batch mean)
+    sigma_B^2 = (1/m) sum (x_i - mu_B)^2      (mini-batch variance)
+    x_hat_i = (x_i - mu_B) / sqrt(sigma_B^2 + epsilon)
+    y_i = gamma x_hat_i + beta                (scale and shift)
+epsilon is a small constant added for numerical stability. gamma and beta are learned parameters.
+Because simply normalizing could change what a layer can represent, the transform can represent the
+identity: setting gamma = sqrt(Var[x]) and beta = E[x] recovers the original activations.
+
+At inference the mini-batch statistics are replaced by population statistics so the output depends
+only on the input; the paper uses the unbiased variance estimate m/(m-1) times the average mini-batch
+variance. Batch Normalization allows much higher learning rates and less careful initialization, and
+also acts as a regularizer, in some cases removing the need for Dropout.

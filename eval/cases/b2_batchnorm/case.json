@@ -1,0 +1,5 @@
+{
+  "source_url": "https://arxiv.org/abs/1502.03167",
+  "focus": "Batch Normalization, Algorithm 1 (the batch normalizing transform). Using one feature and a mini-batch of four numbers, show the mini-batch mean and variance, the normalized values, and the scale-and-shift output. Let the learner edit the batch, gamma, beta and epsilon. Show that the right gamma and beta recover the original inputs, and what happens when every value in the batch is equal.",
+  "audience": "Mechatronics junior who has trained a small neural network once in a lab."
+}

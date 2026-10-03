@@ -1,0 +1,20 @@
+Source: S. Brin and L. Page, "The Anatomy of a Large-Scale Hypertextual Web Search Engine", Computer
+Networks and ISDN Systems 30 (1998) 107-117; Stanford InfoLab PDF, Section 2.1. Paraphrased, with one
+short quotation; text extracted from the PDF on 2026-10-03.
+
+Counting backlinks approximates a page's importance. PageRank refines this by not counting all links
+equally and by normalizing by the number of links on a page. If pages T1...Tn point to page A, C(T) is
+the number of links going out of page T, and d is a damping factor between 0 and 1 (usually 0.85),
+
+    PR(A) = (1 - d) + d (PR(T1)/C(T1) + ... + PR(Tn)/C(Tn)).
+
+The paper adds that the PageRanks "form a probability distribution over web pages". (With the formula as
+printed the ranks sum to the number of pages; dividing (1 - d) by the number of pages N gives the
+version that sums to one. The two differ only by the factor N.) PageRank can be computed with a
+simple iterative algorithm and corresponds to the principal eigenvector of the normalized link
+matrix.
+
+Intuitive justification: a "random surfer" starts on a random page and keeps clicking links, never
+going back, but eventually gets bored and jumps to a random page. The probability of visiting a page
+is its PageRank, and the damping factor d is the probability of continuing to click rather than
+jumping. A page ranks highly if many pages link to it, or if a few highly ranked pages do.

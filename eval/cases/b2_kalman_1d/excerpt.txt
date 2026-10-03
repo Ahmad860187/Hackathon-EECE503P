@@ -1,0 +1,20 @@
+Source: H. Masnadi-Shirazi, A. Masnadi-Shirazi and M.-A. Dastgheib, "A Step by Step Mathematical
+Derivation and Tutorial on Kalman Filters", arXiv:1910.03558 (2019), checked against the arXiv HTML
+rendering. Paraphrased; the scalar equations are the one-dimensional special case of the paper's
+matrix results.
+
+The tutorial derives the Kalman filter twice: as a minimum-variance (orthogonal projection) estimate
+and as Bayesian optimal filtering. In the Bayesian view, filtering builds the posterior belief about
+the state given all data so far in two recursive steps. Prediction propagates the previous belief
+through the state model (Chapman-Kolmogorov equation). Update uses the new measurement via Bayes'
+rule, multiplying the predicted belief by the likelihood of the measurement. For linear models with
+Gaussian noise every belief stays Gaussian, so only a mean and a variance need to be tracked.
+
+Scalar case with state model x_k = a x_(k-1) + w (variance Q) and measurement z_k = x_k + v
+(variance R):
+    predict:  x- = a x,      P- = a^2 P + Q
+    gain:     K = P- / (P- + R)
+    update:   x = x- + K (z - x-),    P = (1 - K) P-
+K lies between 0 and 1: a precise sensor (small R) gives K near 1 and the estimate follows the
+measurement; a noisy sensor (large R) gives K near 0 and the estimate stays near the prediction.
+The updated variance is always smaller than both P- and R.

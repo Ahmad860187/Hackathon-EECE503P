@@ -1,0 +1,5 @@
+{
+  "source_url": "https://doi.org/10.1073/pnas.36.1.48",
+  "focus": "Nash (1950), Equilibrium Points in N-Person Games, specialised to two players with two strategies each. Build an interactive 2x2 payoff matrix where the learner edits both players' payoffs and sees, for every cell, whether either player wants to deviate (best-response arrows). Mark all pure-strategy equilibria. Then let the learner drag each player's mixing probability and show both expected payoffs, highlighting the mixed equilibrium where each player is indifferent between their two strategies. Provide presets for the prisoner's dilemma (one equilibrium that is worse for both than cooperating), matching pennies (no pure equilibrium, only a 50/50 mixed one) and battle of the sexes (two pure equilibria plus a mixed one). Check that at a mixed equilibrium neither player can gain by changing their own probability alone, and state that Nash proved at least one equilibrium (possibly mixed) always exists in finite games.",
+  "audience": "Economics sophomore who knows expected value but no game theory."
+}

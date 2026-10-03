@@ -1,0 +1,17 @@
+Source: J. F. Nash, "Equilibrium Points in N-Person Games", Proceedings of the National Academy of
+Sciences 36 (1950) 48-49. Paraphrased (publisher returns 403 to scripts; content is the well-known
+one-page note).
+
+Nash considers games with n players, each with a finite set of pure strategies, and allows mixed
+strategies: probability distributions over a player's pure strategies. Payoffs of mixed strategies
+are expected values. An n-tuple of strategies (one per player) is an equilibrium point if each
+player's mixed strategy maximizes their own payoff when the other players' strategies are held fixed;
+in other words, each strategy is a best response to the others. Nash maps each n-tuple to the set of
+n-tuples that respond best to it. Using Kakutani's fixed-point theorem, he shows a fixed point always
+exists, so every finite game has at least one equilibrium point in mixed strategies.
+
+For a 2x2 game this means: a cell is a pure equilibrium if neither player can raise their own payoff
+by switching alone. If there is no pure equilibrium (as in matching pennies), the equilibrium is mixed.
+At an interior mixed equilibrium each player randomises so that the OTHER player is indifferent
+between their two strategies. Equilibria need not be efficient: in the prisoner's dilemma both
+players defect even though mutual cooperation pays both more.

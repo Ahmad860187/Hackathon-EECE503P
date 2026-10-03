@@ -1,0 +1,5 @@
+{
+  "source_url": "https://arxiv.org/pdf/1207.0580v1",
+  "focus": "Improving neural networks by preventing co-adaptation of feature detectors (dropout). Explain, with one tiny layer of four units, what randomly omitting units during training does and why the weights are scaled at test time. Let the learner set the unit outputs, the weights and the retention probability, resample random masks, and compare the average over many masks with the scaled 'mean network'.",
+  "audience": "First-year engineering student with no ML background."
+}

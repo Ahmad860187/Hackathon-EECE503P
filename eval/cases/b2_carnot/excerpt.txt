@@ -1,0 +1,18 @@
+Benchmark provenance: TheoremExplainBench theorem_112 "Carnot cycle" (physics / Thermodynamics, Medium),
+MIT licence: an ideal thermodynamic cycle proposed by Sadi Carnot in 1824. Primary source: S. Carnot,
+Reflexions sur la puissance motrice du feu (Paris, 1824); English translation by R. H. Thurston (1890),
+public domain, archive.org item reflectionsonmot00carnrich. Paraphrased.
+
+Carnot asked whether the motive power (work) obtainable from heat is limited, and whether it depends
+on the working substance. He argued that work is produced when heat passes from a hot body to a cold
+body, and described an ideal cycle: (1) expansion in contact with the hot body at constant
+temperature, (2) further expansion with no heat exchange until the substance cools to the cold body's
+temperature, (3) compression at the cold temperature while heat is given up, and (4) compression with
+no heat exchange back to the hot temperature. Because every step can be reversed, no engine can
+produce more work from the same heat between the same two temperatures; otherwise one could combine
+it with a reversed Carnot engine and create work from nothing. Hence the maximum work depends only on
+the two temperatures, not on the working substance.
+
+Carnot reasoned with the caloric theory. The quantitative form came later, from Clausius and Kelvin
+using absolute temperature: efficiency = W/Q_h = 1 - T_c/T_h, with Q_h/T_h = Q_c/T_c for the
+reversible cycle.
