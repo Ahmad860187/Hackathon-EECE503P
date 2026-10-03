@@ -54,18 +54,37 @@ The agent runs exactly like <code>python agent.py --input case.json --output out
 <form method="post" action="/generate" onsubmit="this.classList.add('wait')">
 <label for="u">Paper link (source_url)</label>
 <input id="u" name="source_url" required placeholder="https://arxiv.org/abs/1706.03762">
-<label for="f">What to explain (focus)</label>
-<textarea id="f" name="focus" required placeholder="Section 3.2.1. Explain scaled dot-product attention with small editable Q, K, V matrices. Show scores, weights and output. Check that each row of weights sums to one."></textarea>
-<div class="hint">Name the concept, the learning outcomes, what the learner should change, and what to check.</div>
+<label for="c">Concept to explain (and section, if known)</label>
+<input id="c" name="concept" required placeholder="Section 3.2.1: scaled dot-product attention">
+<label for="ch">What the learner should change</label>
+<input id="ch" name="change" placeholder="small Q, K and V matrices; scaling on/off">
+<label for="sh">What to show</label>
+<input id="sh" name="show" placeholder="similarity scores, normalized attention weights and the output">
+<label for="ck">What must hold (checks)</label>
+<input id="ck" name="check" placeholder="each row of weights sums to one; output equals the weighted sum of V">
+<div class="hint">These four answers are combined into the learning brief (<code>focus</code>) in the same structure as the brief's examples. Only the concept is required.</div>
 <label for="a">Audience</label>
 <input id="a" name="audience" required value="engineering undergraduate">
-<label for="m">Model (OpenRouter id)</label>
-<input id="m" name="model" value="__MODEL__">
 <button type="submit">Generate playground</button>
 <div class="busy">Generating… usually 20–60 seconds (one model call, free checks, targeted repairs).</div>
 </form>
 __RUNS__
 </main></body></html>"""
+
+
+def build_focus(form: dict) -> str:
+    """Compose the learning brief in the structure used by the brief's public examples:
+    concept → what to change → what to show → what to check (+ standard scope guidance)."""
+    concept = form.get("concept", "").strip().rstrip(".")
+    parts = [f"Explain {concept} using a small, self-contained example."]
+    if form.get("change", "").strip():
+        parts.append(f"Let the learner change {form['change'].strip().rstrip('.')}.")
+    if form.get("show", "").strip():
+        parts.append(f"Show {form['show'].strip().rstrip('.')}.")
+    parts.append("Guide them through two contrasting scenarios and state one limitation or common misconception.")
+    if form.get("check", "").strip():
+        parts.append(f"Check that {form['check'].strip().rstrip('.')}.")
+    return " ".join(parts)
 
 
 def _runs_table() -> str:
@@ -108,8 +127,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, b"not found", "text/plain")
         length = int(self.headers.get("Content-Length") or 0)
         form = {k: v[0].strip() for k, v in urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8")).items()}
-        case = {k: form.get(k, "") for k in ("source_url", "focus", "audience")}
-        model = form.get("model") or DEFAULT_MODEL
+        case = {"source_url": form.get("source_url", ""), "focus": build_focus(form),
+                "audience": form.get("audience") or "engineering undergraduate"}
+        model = DEFAULT_MODEL
         run = RUNS / time.strftime("%Y%m%d-%H%M%S")
         run.mkdir(parents=True, exist_ok=True)
         (run / "case.json").write_text(json.dumps(case, ensure_ascii=False, indent=2), encoding="utf-8")
