@@ -402,7 +402,10 @@ class Run:
         if not facts:
             return best
         view = {"explorations": best.spec.get("explorations", []), "limitation": best.spec.get("limitation"),
-                "claims": best.spec.get("claims", [])}
+                "claims": best.spec.get("claims", []),
+                "equations": [{"expr": e.get("expr"), "support": e.get("support")} for e in best.spec.get("equations", [])],
+                "tests": [{"name": t.get("name"), "params": t.get("params"), "expr": t.get("expr")}
+                          for t in best.spec.get("tests", [])]}
         umsg = ("COMPUTED FACTS (from running compute(); these are ground truth for this page):\n"
                 + json.dumps(facts, ensure_ascii=False) + "\n\nCURRENT TEXT:\n" + json.dumps(view, ensure_ascii=False)
                 + "\n\nIf every observe/why/claim is consistent with the computed facts and the mechanism, reply "

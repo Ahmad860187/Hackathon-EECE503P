@@ -113,7 +113,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         path = urllib.parse.urlparse(self.path).path
         if path in ("/", "/index.html"):
-            page = FORM.replace("__MODEL__", html.escape(DEFAULT_MODEL)).replace("__RUNS__", _runs_table())
+            page = FORM.replace("__RUNS__", "")
             return self._send(200, page.encode("utf-8"))
         if path.startswith("/runs/"):
             target = (RUNS / path[len("/runs/"):]).resolve()
